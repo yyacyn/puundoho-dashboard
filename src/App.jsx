@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import Login from './components/Login'
 import Dashboard from './components/Dashboard'
-import './App.css'
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -18,7 +17,7 @@ function App() {
   }
 
   return (
-    <div className="App">
+    <div className="min-h-screen bg-[#0A0A0B] text-white font-['Inter',sans-serif]">
       {!isLoggedIn ? (
         <Login onLogin={handleLogin} />
       ) : (
