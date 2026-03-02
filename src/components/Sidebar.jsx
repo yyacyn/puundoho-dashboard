@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { NavLink, useLocation } from 'react-router-dom'
 import {
     RiDashboard3Line,
     RiGroupLine,
@@ -9,7 +10,6 @@ import {
     RiMapPinLine,
     RiNewspaperLine,
     RiImageLine,
-    RiReceiptLine,
     RiCustomerService2Line,
     RiArrowUpLine,
     RiArrowDownSLine,
@@ -17,28 +17,34 @@ import {
 } from 'react-icons/ri'
 
 const navItems = [
-    { icon: RiDashboard3Line, label: 'Overview', active: true },
-    { icon: RiGroupLine, label: 'Penduduk', active: false },
-    { icon: RiHeartPulseLine, label: 'Stunting', active: false },
+    { icon: RiDashboard3Line, label: 'Overview', to: '/dashboard' },
+    { icon: RiGroupLine, label: 'Penduduk', to: '/dashboard/penduduk' },
+    { icon: RiHeartPulseLine, label: 'Stunting', to: '/dashboard/stunting' },
     {
         icon: RiMoneyDollarCircleLine,
         label: 'Keuangan',
-        active: false,
         children: [
-            { icon: RiBarChartBoxLine, label: 'APBDes' },
-            { icon: RiShoppingBag3Line, label: 'Belanja' },
+            { icon: RiBarChartBoxLine, label: 'APBDes', to: '/dashboard/keuangan/apbdes' },
+            { icon: RiShoppingBag3Line, label: 'Belanja', to: '/dashboard/keuangan/belanja' },
         ],
     },
-    { icon: RiMapPinLine, label: 'Listing', active: false },
-    { icon: RiNewspaperLine, label: 'Berita', active: false },
-    { icon: RiImageLine, label: 'Galeri', active: false },
-    { icon: RiCustomerService2Line, label: 'Pengaduan', active: false },
+    { icon: RiMapPinLine, label: 'Listing', to: '/dashboard/listing' },
+    { icon: RiNewspaperLine, label: 'Berita', to: '/dashboard/berita' },
+    { icon: RiImageLine, label: 'Galeri', to: '/dashboard/galeri' },
+    { icon: RiCustomerService2Line, label: 'Pengaduan', to: '/dashboard/pengaduan' },
 ]
 
-export default function Sidebar({ user, onLogout }) {
-    const [openMenus, setOpenMenus] = useState({ Keuangan: false })
+const activeClass = 'bg-[#1A1A1D] text-white'
+const inactiveClass = 'text-[#8B8B90] hover:bg-[#1A1A1D] hover:text-white'
 
-    const toggleMenu = (label) =>
+export default function Sidebar({ user, onLogout }) {
+    const location = useLocation()
+    const [openMenus, setOpenMenus] = useState(() => {
+        // Auto-open Keuangan if on a keuangan sub-route
+        return { Keuangan: location.pathname.startsWith('/dashboard/keuangan') }
+    })
+
+    const toggle = (label) =>
         setOpenMenus((prev) => ({ ...prev, [label]: !prev[label] }))
 
     return (
@@ -61,51 +67,73 @@ export default function Sidebar({ user, onLogout }) {
 
                 {/* Nav */}
                 <nav className="flex flex-col gap-0.5">
-                    {navItems.map(({ icon: Icon, label, active, children }) => (
-                        <div key={label}>
-                            <button
-                                onClick={() => children && toggleMenu(label)}
-                                className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left ${active
-                                        ? 'bg-[#1A1A1D] text-white'
-                                        : 'text-[#8B8B90] hover:bg-[#1A1A1D] hover:text-white'
-                                    }`}
-                            >
-                                <Icon
-                                    size={17}
-                                    className={active ? 'text-[#298064]' : 'text-[#6B6B70]'}
-                                />
-                                <span className="flex-1">{label}</span>
-                                {children && (
-                                    openMenus[label]
-                                        ? <RiArrowDownSLine size={16} className="text-[#6B6B70]" />
-                                        : <RiArrowRightSLine size={16} className="text-[#6B6B70]" />
-                                )}
-                            </button>
+                    {navItems.map(({ icon: Icon, label, to, children }) => {
 
-                            {/* Sub-items */}
-                            {children && openMenus[label] && (
-                                <div className="flex flex-col gap-0.5 mt-0.5 ml-4 pl-3 border-l border-[#2A2A2E]">
-                                    {children.map(({ icon: ChildIcon, label: childLabel }) => (
-                                        <button
-                                            key={childLabel}
-                                            className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium text-[#8B8B90] hover:bg-[#1A1A1D] hover:text-white transition-colors text-left"
-                                        >
-                                            <ChildIcon size={15} className="text-[#6B6B70]" />
-                                            {childLabel}
-                                        </button>
-                                    ))}
+                        // Parent with children (Keuangan)
+                        if (children) {
+                            const isGroupActive = location.pathname.startsWith('/dashboard/keuangan')
+                            return (
+                                <div key={label}>
+                                    <button
+                                        onClick={() => toggle(label)}
+                                        className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left ${isGroupActive ? activeClass : inactiveClass}`}
+                                    >
+                                        <Icon size={17} className={isGroupActive ? 'text-[#298064]' : 'text-[#6B6B70]'} />
+                                        <span className="flex-1">{label}</span>
+                                        {openMenus[label]
+                                            ? <RiArrowDownSLine size={16} className="text-[#6B6B70]" />
+                                            : <RiArrowRightSLine size={16} className="text-[#6B6B70]" />
+                                        }
+                                    </button>
+                                    {openMenus[label] && (
+                                        <div className="flex flex-col gap-0.5 mt-0.5 ml-4 pl-3 border-l border-[#2A2A2E]">
+                                            {children.map(({ icon: ChildIcon, label: childLabel, to: childTo }) => (
+                                                <NavLink
+                                                    key={childLabel}
+                                                    to={childTo}
+                                                    className={({ isActive }) =>
+                                                        `flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left ${isActive ? activeClass : inactiveClass}`
+                                                    }
+                                                >
+                                                    {({ isActive }) => (
+                                                        <>
+                                                            <ChildIcon size={15} className={isActive ? 'text-[#298064]' : 'text-[#6B6B70]'} />
+                                                            {childLabel}
+                                                        </>
+                                                    )}
+                                                </NavLink>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
-                            )}
-                        </div>
-                    ))}
+                            )
+                        }
+
+                        // Regular nav item
+                        return (
+                            <NavLink
+                                key={label}
+                                to={to}
+                                end={to === '/dashboard'} // exact match for Overview only
+                                className={({ isActive }) =>
+                                    `flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left ${isActive ? activeClass : inactiveClass}`
+                                }
+                            >
+                                {({ isActive }) => (
+                                    <>
+                                        <Icon size={17} className={isActive ? 'text-[#298064]' : 'text-[#6B6B70]'} />
+                                        <span className="flex-1">{label}</span>
+                                    </>
+                                )}
+                            </NavLink>
+                        )
+                    })}
                 </nav>
             </div>
 
-            {/* Bottom */}
+            {/* Bottom — user + logout */}
             <div className="flex flex-col gap-4 pt-4">
                 <div className="h-px bg-[#2A2A2E]" />
-
-                {/* Account */}
                 <div className="flex items-center gap-3 py-1">
                     <div className="w-9 h-9 rounded-full bg-[#2A2A2E] flex items-center justify-center shrink-0">
                         <span className="text-[#8B8B90] text-xs font-semibold">
@@ -113,12 +141,8 @@ export default function Sidebar({ user, onLogout }) {
                         </span>
                     </div>
                     <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                        <span className="text-white text-[13px] font-medium truncate">
-                            {user || 'Admin'}
-                        </span>
-                        <span className="text-[#6B6B70] text-[11px] truncate">
-                            admin@desapuundoho.id
-                        </span>
+                        <span className="text-white text-[13px] font-medium truncate">{user || 'Admin'}</span>
+                        <span className="text-[#6B6B70] text-[11px] truncate">admin@desapuundoho.id</span>
                     </div>
                     <button onClick={onLogout} title="Logout">
                         <RiArrowUpLine size={16} className="text-[#6B6B70] hover:text-white transition-colors" />
