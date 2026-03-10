@@ -67,8 +67,8 @@ export default function Overview() {
             <div className="flex items-start justify-between">
                 <div className="flex flex-col gap-2">
                     <h1
-                        className="text-white leading-tight"
-                        style={{ fontFamily: 'Instrument Serif, serif', fontSize: 38, letterSpacing: -1 }}
+                        className="text-white leading-tight font-bold"
+                        style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 38, letterSpacing: -1 }}
                     >
                         Overview
                     </h1>

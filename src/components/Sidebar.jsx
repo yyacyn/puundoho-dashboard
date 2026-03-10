@@ -14,6 +14,8 @@ import {
     RiArrowUpLine,
     RiArrowDownSLine,
     RiArrowRightSLine,
+    RiSunLine,
+    RiMoonLine,
 } from 'react-icons/ri'
 
 const navItems = [
@@ -131,9 +133,25 @@ export default function Sidebar({ user, onLogout }) {
                 </nav>
             </div>
 
-            {/* Bottom — user + logout */}
+            {/* Bottom — theme toggle + user + logout */}
             <div className="flex flex-col gap-4 pt-4">
                 <div className="h-px bg-[#2A2A2E]" />
+
+                {/* Light/Dark mode toggle */}
+                <button
+                    onClick={() => {
+                        const isLight = document.body.classList.toggle('light-mode')
+                        localStorage.setItem('theme', isLight ? 'light' : 'dark')
+                    }}
+                    className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-[#8B8B90] hover:bg-[#1A1A1D] hover:text-white transition-colors"
+                >
+                    {typeof window !== 'undefined' && document.body.classList.contains('light-mode')
+                        ? <RiMoonLine size={17} className="text-[#6B6B70]" />
+                        : <RiSunLine size={17} className="text-[#6B6B70]" />
+                    }
+                    <span>Mode Terang/Gelap</span>
+                </button>
+
                 <div className="flex items-center gap-3 py-1">
                     <div className="w-9 h-9 rounded-full bg-[#2A2A2E] flex items-center justify-center shrink-0">
                         <span className="text-[#8B8B90] text-xs font-semibold">

@@ -1,16 +1,24 @@
 import { useState } from 'react'
+import { login } from '../api'
 
 function Login({ onLogin }) {
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
+    const [loading, setLoading] = useState(false)
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         if (e && e.preventDefault) e.preventDefault()
-        if (username === 'admin' && password === 'admin123') {
-            onLogin(username)
-        } else {
-            setError('Username atau password salah')
+        setError('')
+        setLoading(true)
+
+        try {
+            const data = await login(username, password)
+            onLogin(data.username)
+        } catch (err) {
+            setError(err.message || 'Username atau password salah')
+        } finally {
+            setLoading(false)
         }
     }
 
@@ -63,9 +71,10 @@ function Login({ onLogin }) {
 
                     <button
                         type="submit"
-                        className="w-full py-3 rounded-lg bg-[#298064] hover:bg-[#1f6b50] text-white text-sm font-semibold transition-colors mt-1"
+                        disabled={loading}
+                        className="w-full py-3 rounded-lg bg-[#298064] hover:bg-[#1f6b50] text-white text-sm font-semibold transition-colors mt-1 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        Login
+                        {loading ? 'Logging in...' : 'Login'}
                     </button>
                 </form>
 
@@ -79,4 +88,3 @@ function Login({ onLogin }) {
 }
 
 export default Login
-

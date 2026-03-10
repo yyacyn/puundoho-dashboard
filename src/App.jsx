@@ -15,6 +15,7 @@ function App() {
 
   const handleLogout = () => {
     sessionStorage.removeItem('user')
+    sessionStorage.removeItem('token')
     setUser(null)
     navigate('/')
   }
