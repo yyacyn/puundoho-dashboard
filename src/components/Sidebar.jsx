@@ -15,7 +15,8 @@ import {
     RiArrowDownSLine,
     RiArrowRightSLine,
     RiMoonLine,
-    RiSunLine
+    RiSunLine,
+    RiLogoutBoxRLine
 } from 'react-icons/ri'
 
 const navItems = [
@@ -155,34 +156,30 @@ export default function Sidebar({ user, role = 'admin', onLogout }) {
                 </nav>
             </div>
 
-            {/* Bottom — theme toggle + user + logout */}
-            <div className="flex flex-col gap-4 pt-4">
-                {/* <div className="h-px border-[#D0D0D4]" /> */}
-
-                {/* Light/Dark mode toggle */}
-                <button
-                    onClick={toggleTheme}
-                    className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-[#8B8B90] hover:bg-[#1A1A1D] hover:text-white transition-colors"
-                >
-                    {isLightMode
-                        ? <RiMoonLine size={17} className="text-[#6B6B70]" />
-                        : <RiSunLine size={17} className="text-[#6B6B70]" />
-                    }
-                    <span>{isLightMode ? 'Mode Gelap' : 'Mode Terang'}</span>
-                </button>
-
-                <div className="flex items-center gap-3 py-1">
-                    <div className="w-9 h-9 rounded-full bg-[#2A2A2E] flex items-center justify-center shrink-0">
-                        <span className="text-[#8B8B90] text-xs font-semibold">
-                            {user ? user.slice(0, 2).toUpperCase() : 'AD'}
-                        </span>
-                    </div>
-                    <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                        <span className="text-white text-[13px] font-medium truncate">{user || 'Admin'}</span>
-                        <span className="text-[#6B6B70] text-[11px] truncate">admin@desapuundoho.id</span>
-                    </div>
-                    <button onClick={onLogout} title="Logout">
-                        <RiArrowUpLine size={16} className="text-[#6B6B70] hover:text-white transition-colors" />
+            {/* Bottom — user + theme toggle + logout */}
+            <div className="flex items-center justify-between pt-4 mt-auto border-t border-[#2A2A2E]">
+                <div className="flex flex-col flex-1 min-w-0 px-2">
+                    <span className="text-white text-[13px] font-medium truncate">{user || 'Admin'}</span>
+                    <span className="text-[#6B6B70] text-[11px] capitalize">{role}</span>
+                </div>
+                
+                <div className="flex items-center gap-1 shrink-0">
+                    <button
+                        onClick={toggleTheme}
+                        title={isLightMode ? 'Mode Gelap' : 'Mode Terang'}
+                        className="p-2 rounded-lg text-[#8B8B90] hover:bg-[#1A1A1D] hover:text-white transition-colors"
+                    >
+                        {isLightMode
+                            ? <RiMoonLine size={18} />
+                            : <RiSunLine size={18} />
+                        }
+                    </button>
+                    <button
+                        onClick={onLogout}
+                        title="Logout"
+                        className="p-2 rounded-lg text-[#8B8B90] hover:bg-red-500/10 hover:text-red-400 transition-colors"
+                    >
+                        <RiLogoutBoxRLine size={18} />
                     </button>
                 </div>
             </div>
