@@ -14,7 +14,7 @@ function Login({ onLogin }) {
 
         try {
             const data = await login(username, password)
-            onLogin(data.username)
+            onLogin(data.username, data.role)
         } catch (err) {
             setError(err.message || 'Username atau password salah')
         } finally {
@@ -79,8 +79,9 @@ function Login({ onLogin }) {
                 </form>
 
                 {/* Footer hint */}
-                <p className="text-[#4A4A4E] text-xs text-center">
-                    Default: <span className="text-[#6B6B70]">admin</span> / <span className="text-[#6B6B70]">admin123</span>
+                <p className="text-[#4A4A4E] text-xs text-center flex flex-col gap-1">
+                    <span>Default Admin: <span className="text-[#6B6B70]">admin / admin123</span></span>
+                    <span>Default Bendahara: <span className="text-[#6B6B70]">bendahara / bendahara123</span></span>
                 </p>
             </div>
         </div>

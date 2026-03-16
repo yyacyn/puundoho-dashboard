@@ -19,27 +19,28 @@ import {
 } from 'react-icons/ri'
 
 const navItems = [
-    { icon: RiDashboard3Line, label: 'Overview', to: '/dashboard' },
-    { icon: RiGroupLine, label: 'Penduduk', to: '/dashboard/penduduk' },
-    { icon: RiHeartPulseLine, label: 'Stunting', to: '/dashboard/stunting' },
+    { icon: RiDashboard3Line, label: 'Overview', to: '/dashboard', roles: ['admin', 'bendahara'] },
+    { icon: RiGroupLine, label: 'Penduduk', to: '/dashboard/penduduk', roles: ['admin'] },
+    { icon: RiHeartPulseLine, label: 'Stunting', to: '/dashboard/stunting', roles: ['admin'] },
     {
         icon: RiMoneyDollarCircleLine,
         label: 'Keuangan',
+        roles: ['bendahara'],
         children: [
-            { icon: RiBarChartBoxLine, label: 'APBDes', to: '/dashboard/keuangan/apbdes' },
-            { icon: RiShoppingBag3Line, label: 'Belanja', to: '/dashboard/keuangan/belanja' },
+            { icon: RiBarChartBoxLine, label: 'APBDes', to: '/dashboard/keuangan/apbdes', roles: ['bendahara'] },
+            { icon: RiShoppingBag3Line, label: 'Belanja', to: '/dashboard/keuangan/belanja', roles: ['bendahara'] },
         ],
     },
-    { icon: RiMapPinLine, label: 'Listing', to: '/dashboard/listing' },
-    { icon: RiNewspaperLine, label: 'Berita', to: '/dashboard/berita' },
-    { icon: RiImageLine, label: 'Galeri', to: '/dashboard/galeri' },
-    { icon: RiCustomerService2Line, label: 'Pengaduan', to: '/dashboard/pengaduan' },
+    { icon: RiMapPinLine, label: 'Listing', to: '/dashboard/listing', roles: ['admin'] },
+    { icon: RiNewspaperLine, label: 'Berita', to: '/dashboard/berita', roles: ['admin'] },
+    { icon: RiImageLine, label: 'Galeri', to: '/dashboard/galeri', roles: ['admin'] },
+    { icon: RiCustomerService2Line, label: 'Pengaduan', to: '/dashboard/pengaduan', roles: ['admin'] },
 ]
 
 const activeClass = 'bg-[#1A1A1D] text-white'
 const inactiveClass = 'text-[#8B8B90] hover:bg-[#1A1A1D] hover:text-white'
 
-export default function Sidebar({ user, onLogout }) {
+export default function Sidebar({ user, role = 'admin', onLogout }) {
     const location = useLocation()
     const [openMenus, setOpenMenus] = useState(() => {
         // Auto-open Keuangan if on a keuangan sub-route
@@ -88,7 +89,9 @@ export default function Sidebar({ user, onLogout }) {
 
                 {/* Nav */}
                 <nav className="flex flex-col gap-0.5">
-                    {navItems.map(({ icon: Icon, label, to, children }) => {
+                    {navItems
+                        .filter(item => item.roles.includes(role))
+                        .map(({ icon: Icon, label, to, children }) => {
 
                         // Parent with children (Keuangan)
                         if (children) {
@@ -154,7 +157,7 @@ export default function Sidebar({ user, onLogout }) {
 
             {/* Bottom — theme toggle + user + logout */}
             <div className="flex flex-col gap-4 pt-4">
-                <div className="h-px bg-[#2A2A2E]" />
+                {/* <div className="h-px border-[#D0D0D4]" /> */}
 
                 {/* Light/Dark mode toggle */}
                 <button

@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Overview from './Overview'
 import Articles from './Articles'
+import Listing from './Listing'
 import { RiAlertLine } from 'react-icons/ri'
 
 // Placeholder for pages not yet built
@@ -17,11 +18,11 @@ function ComingSoon({ title }) {
     )
 }
 
-export default function DashboardLayout({ user, onLogout }) {
+export default function DashboardLayout({ user, role, onLogout }) {
     return (
         <div className="flex h-screen bg-[#0A0A0B] overflow-hidden">
             {/* Sidebar */}
-            <Sidebar user={user} onLogout={onLogout} />
+            <Sidebar user={user} role={role} onLogout={onLogout} />
 
             {/* Page content */}
             <main className="flex-1 overflow-y-auto">
@@ -31,7 +32,7 @@ export default function DashboardLayout({ user, onLogout }) {
                     <Route path="stunting" element={<ComingSoon title="Data Stunting" />} />
                     <Route path="keuangan/apbdes" element={<ComingSoon title="APBDes" />} />
                     <Route path="keuangan/belanja" element={<ComingSoon title="Belanja" />} />
-                    <Route path="listing" element={<ComingSoon title="Listing Fasilitas" />} />
+                    <Route path="listing" element={<Listing />} />
                     <Route path="berita" element={<Articles />} />
                     <Route path="galeri" element={<ComingSoon title="Galeri Foto" />} />
                     <Route path="pengaduan" element={<ComingSoon title="Pengaduan Masyarakat" />} />

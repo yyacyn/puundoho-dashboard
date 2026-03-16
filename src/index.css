@@ -91,10 +91,26 @@
     border-color: #298064;
 }
 
+/* Leaflet Map Dark Mode */
+.map-dark-mode .leaflet-layer,
+.map-dark-mode .leaflet-control-zoom-in,
+.map-dark-mode .leaflet-control-zoom-out,
+.map-dark-mode .leaflet-control-attribution {
+  filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(110%);
+}
+
 /* ── Light Mode Overrides ── */
 body.light-mode {
     background: #F5F5F7 !important;
     color: #1A1A2E !important;
+}
+
+/* Return map to normal in light mode */
+body.light-mode .map-dark-mode .leaflet-layer,
+body.light-mode .map-dark-mode .leaflet-control-zoom-in,
+body.light-mode .map-dark-mode .leaflet-control-zoom-out,
+body.light-mode .map-dark-mode .leaflet-control-attribution {
+  filter: none;
 }
 
 body.light-mode .bg-\[\#0A0A0B\] {

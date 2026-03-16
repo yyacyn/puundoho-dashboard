@@ -5,6 +5,7 @@ import DashboardLayout from './components/DashboardLayout'
 
 function App() {
   const [user, setUser] = useState(() => sessionStorage.getItem('user'))
+  const [role, setRole] = useState(() => sessionStorage.getItem('role') || 'admin')
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -16,16 +17,20 @@ function App() {
     }
   }, [])
 
-  const handleLogin = (username) => {
+  const handleLogin = (username, userRole) => {
     sessionStorage.setItem('user', username)
+    sessionStorage.setItem('role', userRole)
     setUser(username)
+    setRole(userRole)
     navigate('/dashboard')
   }
 
   const handleLogout = () => {
     sessionStorage.removeItem('user')
     sessionStorage.removeItem('token')
+    sessionStorage.removeItem('role')
     setUser(null)
+    setRole(null)
     navigate('/')
   }
 
@@ -42,7 +47,7 @@ function App() {
         <Route
           path="/dashboard/*"
           element={user
-            ? <DashboardLayout user={user} onLogout={handleLogout} />
+            ? <DashboardLayout user={user} role={role} onLogout={handleLogout} />
             : <Navigate to="/" replace />
           }
         />

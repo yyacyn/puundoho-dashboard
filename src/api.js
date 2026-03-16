@@ -43,6 +43,7 @@ export async function login(username, password) {
 
     sessionStorage.setItem('token', data.token)
     sessionStorage.setItem('user', data.username)
+    sessionStorage.setItem('role', data.role)
 
     return data
 }
