@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import {
     RiDashboard3Line,
@@ -14,8 +14,8 @@ import {
     RiArrowUpLine,
     RiArrowDownSLine,
     RiArrowRightSLine,
-    RiSunLine,
     RiMoonLine,
+    RiSunLine
 } from 'react-icons/ri'
 
 const navItems = [
@@ -45,9 +45,28 @@ export default function Sidebar({ user, onLogout }) {
         // Auto-open Keuangan if on a keuangan sub-route
         return { Keuangan: location.pathname.startsWith('/dashboard/keuangan') }
     })
+    const [isLightMode, setIsLightMode] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('theme') === 'light' || 
+                   (document.documentElement.getAttribute('data-theme') === 'light')
+        }
+        return false
+    })
 
     const toggle = (label) =>
         setOpenMenus((prev) => ({ ...prev, [label]: !prev[label] }))
+
+    const toggleTheme = () => {
+        const newTheme = isLightMode ? 'dark' : 'light'
+        setIsLightMode(!isLightMode)
+        localStorage.setItem('theme', newTheme)
+        document.documentElement.setAttribute('data-theme', newTheme)
+        if (newTheme === 'light') {
+            document.body.classList.add('light-mode')
+        } else {
+            document.body.classList.remove('light-mode')
+        }
+    }
 
     return (
         <aside
@@ -139,17 +158,14 @@ export default function Sidebar({ user, onLogout }) {
 
                 {/* Light/Dark mode toggle */}
                 <button
-                    onClick={() => {
-                        const isLight = document.body.classList.toggle('light-mode')
-                        localStorage.setItem('theme', isLight ? 'light' : 'dark')
-                    }}
+                    onClick={toggleTheme}
                     className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-[#8B8B90] hover:bg-[#1A1A1D] hover:text-white transition-colors"
                 >
-                    {typeof window !== 'undefined' && document.body.classList.contains('light-mode')
+                    {isLightMode
                         ? <RiMoonLine size={17} className="text-[#6B6B70]" />
                         : <RiSunLine size={17} className="text-[#6B6B70]" />
                     }
-                    <span>Mode Terang/Gelap</span>
+                    <span>{isLightMode ? 'Mode Gelap' : 'Mode Terang'}</span>
                 </button>
 
                 <div className="flex items-center gap-3 py-1">

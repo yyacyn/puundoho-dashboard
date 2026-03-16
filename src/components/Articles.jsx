@@ -195,88 +195,108 @@ export default function Articles() {
 
             {/* Article Table */}
             <div className="rounded-xl overflow-hidden border border-[#1F1F23]">
-                <div className="grid grid-cols-[2fr_1fr_1fr_auto] px-5 py-3.5 bg-[#141417] border-b border-[#1F1F23]">
-                    {['Artikel', 'Penulis', 'Tanggal', 'Aksi'].map(h => (
-                        <span key={h} className="text-[#6B6B70] text-[11px] font-semibold tracking-wide uppercase">{h}</span>
-                    ))}
-                </div>
-
-                {loading ? (
-                    <div className="flex items-center justify-center gap-3 py-16 bg-[#141417]">
-                        <RiLoader4Line size={24} className="text-[#298064] animate-spin" />
-                        <span className="text-[#6B6B70] text-sm">Memuat artikel...</span>
-                    </div>
-                ) : filtered.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center gap-3 py-16 bg-[#141417]">
-                        <RiNewspaperLine size={32} className="text-[#3A3A3E]" />
-                        <span className="text-[#6B6B70] text-sm">Tidak ada artikel ditemukan</span>
-                    </div>
-                ) : (
-                    filtered.map((article, i) => (
-                        <div
-                            key={article.id}
-                            className={`grid grid-cols-[2fr_1fr_1fr_auto] items-center px-5 py-4 bg-[#141417] hover:bg-[#1A1A1D] transition-colors ${i < filtered.length - 1 ? 'border-b border-[#1F1F23]' : ''
-                                }`}
-                        >
-                            <div className="flex items-center gap-3 pr-4">
-                                {/* Cover thumbnail */}
-                                {article.cover_image ? (
-                                    <img
-                                        src={article.cover_image}
-                                        alt=""
-                                        className="w-10 h-10 rounded-lg object-cover shrink-0 border border-[#2A2A2E]"
-                                    />
-                                ) : (
-                                    <div className="w-10 h-10 rounded-lg bg-[#1F1F23] flex items-center justify-center shrink-0">
-                                        <RiNewspaperLine size={16} className="text-[#4A4A4E]" />
+                <table className="w-full border-collapse">
+                    <thead>
+                        <tr className="bg-[#141417] border-b border-[#1F1F23]">
+                            <th className="text-left px-5 py-3.5 text-[#6B6B70] text-[11px] font-semibold tracking-wide uppercase w-[50%]">Artikel</th>
+                            <th className="text-left px-5 py-3.5 text-[#6B6B70] text-[11px] font-semibold tracking-wide uppercase">Penulis</th>
+                            <th className="text-left px-5 py-3.5 text-[#6B6B70] text-[11px] font-semibold tracking-wide uppercase">Tanggal</th>
+                            <th className="text-right px-5 py-3.5 text-[#6B6B70] text-[11px] font-semibold tracking-wide uppercase">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {loading ? (
+                            <tr>
+                                <td colSpan={4} className="text-center py-16 bg-[#141417]">
+                                    <div className="flex items-center justify-center gap-3">
+                                        <RiLoader4Line size={24} className="text-[#298064] animate-spin" />
+                                        <span className="text-[#6B6B70] text-sm">Memuat artikel...</span>
                                     </div>
-                                )}
-                                <div className="flex flex-col gap-1">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-white text-[13px] font-medium leading-snug">
-                                            {article.title}
-                                        </span>
-                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0 ${article.status === 'published'
-                                            ? 'bg-green-500/10 text-green-400'
-                                            : 'bg-orange-500/10 text-orange-400'
-                                            }`}>
-                                            {article.status === 'published' ? 'Tayang' : 'Draft'}
-                                        </span>
+                                </td>
+                            </tr>
+                        ) : filtered.length === 0 ? (
+                            <tr>
+                                <td colSpan={4} className="text-center py-16 bg-[#141417]">
+                                    <div className="flex flex-col items-center justify-center gap-3">
+                                        <RiNewspaperLine size={32} className="text-[#3A3A3E]" />
+                                        <span className="text-[#6B6B70] text-sm">Tidak ada artikel ditemukan</span>
                                     </div>
-                                    <span className="text-[#6B6B70] text-xs leading-relaxed line-clamp-1">
-                                        {article.excerpt}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <span className="text-[#ADADB0] text-[13px]">{article.author}</span>
-                            <span className="text-[#6B6B70] text-xs">{formatDate(article.created_at)}</span>
-
-                            <div className="flex items-center gap-1">
-                                <button
-                                    title="Pratinjau"
-                                    className="w-8 h-8 rounded-md flex items-center justify-center text-[#6B6B70] hover:text-white hover:bg-[#2A2A2E] transition-colors"
+                                </td>
+                            </tr>
+                        ) : (
+                            filtered.map((article, i) => (
+                                <tr
+                                    key={article.id}
+                                    className={`hover:bg-[#1A1A1D] transition-colors ${i < filtered.length - 1 ? 'border-b border-[#1F1F23]' : ''
+                                        }`}
                                 >
-                                    <RiEyeLine size={15} />
-                                </button>
-                                <button
-                                    onClick={() => handleEdit(article)}
-                                    title="Edit"
-                                    className="w-8 h-8 rounded-md flex items-center justify-center text-[#6B6B70] hover:text-[#298064] hover:bg-[#2A2A2E] transition-colors"
-                                >
-                                    <RiEditLine size={15} />
-                                </button>
-                                <button
-                                    onClick={() => handleDelete(article.id)}
-                                    title="Hapus"
-                                    className="w-8 h-8 rounded-md flex items-center justify-center text-[#6B6B70] hover:text-red-400 hover:bg-[#2A2A2E] transition-colors"
-                                >
-                                    <RiDeleteBinLine size={15} />
-                                </button>
-                            </div>
-                        </div>
-                    ))
-                )}
+                                    <td className="px-5 py-4 bg-[#141417]">
+                                        <div className="flex items-center gap-3">
+                                            {/* Cover thumbnail */}
+                                            {article.cover_image ? (
+                                                <img
+                                                    src={article.cover_image}
+                                                    alt=""
+                                                    className="w-10 h-10 rounded-lg object-cover shrink-0 border border-[#2A2A2E]"
+                                                />
+                                            ) : (
+                                                <div className="w-10 h-10 rounded-lg bg-[#1F1F23] flex items-center justify-center shrink-0">
+                                                    <RiNewspaperLine size={16} className="text-[#4A4A4E]" />
+                                                </div>
+                                            )}
+                                            <div className="flex flex-col gap-1 min-w-0">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-white text-[13px] font-medium leading-snug truncate block">
+                                                        {article.title}
+                                                    </span>
+                                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0 ${article.status === 'published'
+                                                        ? 'bg-green-500/10 text-green-400'
+                                                        : 'bg-orange-500/10 text-orange-400'
+                                                        }`}>
+                                                        {article.status === 'published' ? 'Tayang' : 'Draft'}
+                                                    </span>
+                                                </div>
+                                                <span className="text-[#6B6B70] text-xs leading-relaxed line-clamp-1">
+                                                    {article.excerpt}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-5 py-4 bg-[#141417]">
+                                        <span className="text-[#ADADB0] text-[13px]">{article.author}</span>
+                                    </td>
+                                    <td className="px-5 py-4 bg-[#141417]">
+                                        <span className="text-[#6B6B70] text-xs whitespace-nowrap">{formatDate(article.created_at)}</span>
+                                    </td>
+                                    <td className="px-5 py-4 bg-[#141417] text-right">
+                                        <div className="flex items-center justify-end gap-1">
+                                            <button
+                                                title="Pratinjau"
+                                                className="w-8 h-8 rounded-md flex items-center justify-center text-[#6B6B70] hover:text-white hover:bg-[#2A2A2E] transition-colors"
+                                            >
+                                                <RiEyeLine size={15} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleEdit(article)}
+                                                title="Edit"
+                                                className="w-8 h-8 rounded-md flex items-center justify-center text-[#6B6B70] hover:text-[#298064] hover:bg-[#2A2A2E] transition-colors"
+                                            >
+                                                <RiEditLine size={15} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(article.id)}
+                                                title="Hapus"
+                                                className="w-8 h-8 rounded-md flex items-center justify-center text-[#6B6B70] hover:text-red-400 hover:bg-[#2A2A2E] transition-colors"
+                                            >
+                                                <RiDeleteBinLine size={15} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
             </div>
 
             {/* Article Form Modal */}

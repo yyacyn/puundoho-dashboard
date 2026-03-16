@@ -143,7 +143,7 @@ body.light-mode .text-\[\#4A4A4E\] {
 
 body.light-mode input,
 body.light-mode textarea {
-    background-color: #F0F0F2 !important;
+    background-color: #FFFFFF !important;
     color: #1A1A2E !important;
     border-color: #D0D0D4 !important;
 }
@@ -200,4 +200,13 @@ body.light-mode .quill-dark .ql-snow .ql-picker-label {
 body.light-mode .quill-dark .ql-snow .ql-picker-options {
     background: #FFFFFF !important;
     border-color: #D0D0D4 !important;
+}
+
+/* Green button text fix for light mode - force white text on green buttons */
+body.light-mode .bg-\[\#298064\] {
+    color: #FFFFFF !important;
+}
+
+body.light-mode .text-green-400 {
+    color: #16A34A !important;
 }
