@@ -112,9 +112,8 @@ export default function Articles() {
 
     return (
         <div className="flex flex-col gap-7 px-10 py-8">
-
             {/* Header */}
-            <div className="flex items-start justify-between">
+            <div className="flex items-center justify-between">
                 <div className="flex flex-col gap-1.5">
                     <h1
                         className="text-white leading-tight font-bold"
@@ -128,7 +127,7 @@ export default function Articles() {
                 </div>
                 <button
                     onClick={() => { setEditTarget(null); setShowForm(true) }}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#298064] text-white text-[13px] font-medium hover:bg-[#1f6b50] transition-colors"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#298064] hover:bg-[#1f6b50] text-white text-sm font-semibold transition-colors shadow-sm"
                 >
                     <RiAddLine size={16} />
                     Tambah Artikel
@@ -199,6 +198,7 @@ export default function Articles() {
                     <thead>
                         <tr className="bg-[#141417] border-b border-[#1F1F23]">
                             <th className="text-left px-5 py-3.5 text-[#6B6B70] text-[11px] font-semibold tracking-wide uppercase w-[50%]">Artikel</th>
+                            <th className="text-left px-5 py-3.5 text-[#6B6B70] text-[11px] font-semibold tracking-wide uppercase">Kategori</th>
                             <th className="text-left px-5 py-3.5 text-[#6B6B70] text-[11px] font-semibold tracking-wide uppercase">Penulis</th>
                             <th className="text-left px-5 py-3.5 text-[#6B6B70] text-[11px] font-semibold tracking-wide uppercase">Tanggal</th>
                             <th className="text-right px-5 py-3.5 text-[#6B6B70] text-[11px] font-semibold tracking-wide uppercase">Aksi</th>
@@ -207,7 +207,7 @@ export default function Articles() {
                     <tbody>
                         {loading ? (
                             <tr>
-                                <td colSpan={4} className="text-center py-16 bg-[#141417]">
+                                <td colSpan={5} className="text-center py-16 bg-[#141417]">
                                     <div className="flex items-center justify-center gap-3">
                                         <RiLoader4Line size={24} className="text-[#298064] animate-spin" />
                                         <span className="text-[#6B6B70] text-sm">Memuat artikel...</span>
@@ -216,7 +216,7 @@ export default function Articles() {
                             </tr>
                         ) : filtered.length === 0 ? (
                             <tr>
-                                <td colSpan={4} className="text-center py-16 bg-[#141417]">
+                                <td colSpan={5} className="text-center py-16 bg-[#141417]">
                                     <div className="flex flex-col items-center justify-center gap-3">
                                         <RiNewspaperLine size={32} className="text-[#3A3A3E]" />
                                         <span className="text-[#6B6B70] text-sm">Tidak ada artikel ditemukan</span>
@@ -263,30 +263,35 @@ export default function Articles() {
                                         </div>
                                     </td>
                                     <td className="px-5 py-4 bg-[#141417]">
+                                        <span className="px-2.5 py-1 rounded-full bg-[#1A1A1D] border border-[#2A2A2E] text-[#ADADB0] text-[12px] font-medium">
+                                            {article.category || 'Pilih kategori'}
+                                        </span>
+                                    </td>
+                                    <td className="px-5 py-4 bg-[#141417]">
                                         <span className="text-[#ADADB0] text-[13px]">{article.author}</span>
                                     </td>
                                     <td className="px-5 py-4 bg-[#141417]">
                                         <span className="text-[#6B6B70] text-xs whitespace-nowrap">{formatDate(article.created_at)}</span>
                                     </td>
                                     <td className="px-5 py-4 bg-[#141417] text-right">
-                                        <div className="flex items-center justify-end gap-1">
+                                        <div className="flex items-center justify-end gap-2">
                                             <button
                                                 title="Pratinjau"
-                                                className="w-8 h-8 rounded-md flex items-center justify-center text-[#6B6B70] hover:text-white hover:bg-[#2A2A2E] transition-colors"
+                                                className="p-1.5 rounded bg-[#1A1A1D] hover:bg-[#2A2A2E] text-[#8B8B90] hover:text-white transition-colors"
                                             >
                                                 <RiEyeLine size={15} />
                                             </button>
                                             <button
                                                 onClick={() => handleEdit(article)}
                                                 title="Edit"
-                                                className="w-8 h-8 rounded-md flex items-center justify-center text-[#6B6B70] hover:text-[#298064] hover:bg-[#2A2A2E] transition-colors"
+                                                className="p-1.5 rounded bg-[#1A1A1D] hover:bg-[#2A2A2E] text-[#8B8B90] hover:text-white transition-colors"
                                             >
                                                 <RiEditLine size={15} />
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(article.id)}
                                                 title="Hapus"
-                                                className="w-8 h-8 rounded-md flex items-center justify-center text-[#6B6B70] hover:text-red-400 hover:bg-[#2A2A2E] transition-colors"
+                                                className="p-1.5 rounded bg-[#1A1A1D] hover:!bg-red-500/10 text-[#8B8B90] hover:text-red-400 transition-colors"
                                             >
                                                 <RiDeleteBinLine size={15} />
                                             </button>
@@ -429,10 +434,40 @@ function ArticleFormModal({ article, onClose, onSave }) {
     const [title, setTitle] = useState(article?.title ?? '')
     const [excerpt, setExcerpt] = useState(article?.excerpt ?? '')
     const [content, setContent] = useState(article?.content ?? '')
+    const [category, setCategory] = useState(article?.category ?? 'Umum')
     const [status, setStatus] = useState(article?.status ?? 'draft')
     const [coverImage, setCoverImage] = useState(article?.cover_image ?? '')
     const [saving, setSaving] = useState(false)
+    const [existingCategories, setExistingCategories] = useState([])
+    const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
+    const dropdownRef = useRef(null)
     const quillRef = useRef(null)
+
+    // Fetch existing categories on mount
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const res = await apiFetch('/articles')
+                const data = await res.json()
+                const categories = [...new Set((data.articles || []).map(a => a.category || 'Umum'))]
+                setExistingCategories(categories)
+            } catch (err) {
+                console.error('Failed to fetch categories:', err)
+            }
+        }
+        fetchCategories()
+    }, [])
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+                setShowCategoryDropdown(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
 
     const slugify = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
 
@@ -443,6 +478,7 @@ function ArticleFormModal({ article, onClose, onSave }) {
             title,
             excerpt,
             content,
+            category,
             status,
             slug: slugify(title),
             cover_image: coverImage,
@@ -565,6 +601,65 @@ function ArticleFormModal({ article, onClose, onSave }) {
                                 rows={3}
                                 className="w-full px-4 py-3 rounded-lg bg-[#1A1A1D] border border-[#2A2A2E] text-white text-sm outline-none focus:border-[#298064] transition-colors placeholder:text-[#4A4A4E] resize-none"
                             />
+                        </div>
+
+                        {/* Category */}
+                        <div className="flex flex-col gap-1.5" ref={dropdownRef}>
+                            <label className="text-[#8B8B90] text-xs font-medium uppercase tracking-wide">Kategori</label>
+                            <div className={`dropdown w-full ${showCategoryDropdown ? 'dropdown-open' : ''}`}>
+                                <div
+                                    tabIndex={0}
+                                    role="button"
+                                    onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                                    className="w-full px-4 py-3 rounded-lg bg-[#1A1A1D] border border-[#2A2A2E] text-white text-sm outline-none focus:border-[#298064] transition-colors flex items-center justify-between cursor-pointer"
+                                >
+                                    <span className={category ? 'text-white' : 'text-[#4A4A4E]'}>
+                                        {category || 'Pilih kategori...'}
+                                    </span>
+                                    <svg 
+                                        className={`w-4 h-4 text-[#6B6B70] transition-transform ${showCategoryDropdown ? 'rotate-180' : ''}`} 
+                                        fill="none" 
+                                        stroke="currentColor" 
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
+                                <ul className="dropdown-content z-[100] menu p-2 shadow bg-[#1A1A1D] border border-[#2A2A2E] rounded-lg w-full">
+                                    {existingCategories.length > 0 ? (
+                                        existingCategories.map(cat => (
+                                            <li key={cat}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setCategory(cat)
+                                                        setShowCategoryDropdown(false)
+                                                    }}
+                                                    className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${category === cat ? 'bg-[#298064] text-white' : 'text-[#ADADB0] hover:bg-[#2A2A2E]'}`}
+                                                >
+                                                    {cat}
+                                                </button>
+                                            </li>
+                                        ))
+                                    ) : (
+                                        <li className="px-3 py-2 text-[#6B6B70] text-xs italic">Belum ada kategori</li>
+                                    )}
+                                    <li className="menu-title text-[10px] text-[#6B6B70] px-2 pt-2 uppercase tracking-wider">Buat Kategori Baru</li>
+                                    <div className="px-2 py-1.5">
+                                        <input
+                                            type="text"
+                                            value={category}
+                                            onChange={e => setCategory(e.target.value)}
+                                            placeholder="Buat Kategori Baru..."
+                                            className="w-full bg-[#141417] border border-[#2A2A2E] text-white text-xs focus:border-[#298064] outline-none px-3 py-2 rounded-md"
+                                            onClick={e => e.stopPropagation()}
+                                        />
+                                    </div>
+                                </ul>
+                            </div>
+                            <p className="text-xs text-[#6B6B70] mt-0.5">
+                                Pilih dari kategori yang sudah ada atau ketik kategori baru
+                            </p>
                         </div>
 
                         {/* Status */}

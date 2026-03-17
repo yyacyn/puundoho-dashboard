@@ -143,14 +143,17 @@ export default function Listing() {
     }
 
     return (
-        <div className="flex flex-col gap-6 p-8 min-h-full">
+        <div className="flex flex-col gap-7 px-10 py-8">
             {/* Header */}
             <div className="flex items-center justify-between">
-                <div className="flex flex-col gap-1">
-                    <h1 className="text-white text-2xl font-semibold tracking-tight leading-none">
+                <div className="flex flex-col gap-1.5">
+                    <h1
+                        className="text-white leading-tight font-bold"
+                        style={{ fontFamily: "'Nunito Sans', sans-serif", fontSize: 38, letterSpacing: -1 }}
+                    >
                         Listing Fasilitas
                     </h1>
-                    <p className="text-[#8B8B90] text-sm">
+                    <p className="text-[#6B6B70] text-sm">
                         Kelola direktori dan lokasi fasilitas desa.
                     </p>
                 </div>
@@ -159,7 +162,7 @@ export default function Listing() {
                     className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#298064] hover:bg-[#1f6b50] text-white text-sm font-semibold transition-colors shadow-sm"
                 >
                     <RiAddLine size={18} />
-                    <span>Fasilitas Baru</span>
+                    Fasilitas Baru
                 </button>
             </div>
 
@@ -262,7 +265,7 @@ export default function Listing() {
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(listing.id)}
-                                                className="p-1.5 rounded bg-[#1A1A1D] hover:bg-red-500/10 text-[#8B8B90] hover:text-red-400 transition-colors"
+                                                className="p-1.5 rounded bg-[#1A1A1D] hover:!bg-red-500/10 text-[#8B8B90] hover:text-red-400 transition-colors"
                                             >
                                                 <RiDeleteBinLine size={15} />
                                             </button>

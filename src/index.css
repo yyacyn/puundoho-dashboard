@@ -129,12 +129,20 @@ body.light-mode .bg-\[\#111113\] {
     background-color: #FFFFFF !important;
 }
 
-body.light-mode .border-\[\#1F1F23\] {
-    border-color: #E0E0E4 !important;
+body.light-mode .border-\[\#1F1F23\],
+body.light-mode .divide-\[\#1F1F23\] > :not([hidden]) ~ :not([hidden]),
+body.light-mode .resident-table-header-row,
+body.light-mode tr.resident-table-header-row,
+body.light-mode tr.resident-table-row,
+body.light-mode .resident-table-tbody > tr,
+body.light-mode .resident-table-tbody > :not([hidden]) ~ :not([hidden]) {
+    border-color: #E5E7EB !important;
+    border-bottom-color: #E5E7EB !important;
 }
 
-body.light-mode .border-\[\#2A2A2E\] {
-    border-color: #D0D0D4 !important;
+body.light-mode .border-\[\#2A2A2E\],
+body.light-mode .divide-\[\#2A2A2E\] > :not([hidden]) ~ :not([hidden]) {
+    border-color: #E5E7EB !important;
 }
 
 body.light-mode .text-white {

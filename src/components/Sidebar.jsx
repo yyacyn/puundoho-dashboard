@@ -4,14 +4,12 @@ import {
     RiDashboard3Line,
     RiGroupLine,
     RiHeartPulseLine,
-    RiMoneyDollarCircleLine,
     RiBarChartBoxLine,
     RiShoppingBag3Line,
     RiMapPinLine,
     RiNewspaperLine,
     RiImageLine,
     RiCustomerService2Line,
-    RiArrowUpLine,
     RiArrowDownSLine,
     RiArrowRightSLine,
     RiMoonLine,
@@ -23,15 +21,9 @@ const navItems = [
     { icon: RiDashboard3Line, label: 'Overview', to: '/dashboard', roles: ['admin', 'bendahara'] },
     { icon: RiGroupLine, label: 'Penduduk', to: '/dashboard/penduduk', roles: ['admin'] },
     { icon: RiHeartPulseLine, label: 'Stunting', to: '/dashboard/stunting', roles: ['admin'] },
-    {
-        icon: RiMoneyDollarCircleLine,
-        label: 'Keuangan',
-        roles: ['bendahara'],
-        children: [
-            { icon: RiBarChartBoxLine, label: 'APBDes', to: '/dashboard/keuangan/apbdes', roles: ['bendahara'] },
-            { icon: RiShoppingBag3Line, label: 'Belanja', to: '/dashboard/keuangan/belanja', roles: ['bendahara'] },
-        ],
-    },
+    { icon: RiBarChartBoxLine, label: 'IDM', to: '/dashboard/idm', roles: ['admin'] },
+    { icon: RiBarChartBoxLine, label: 'APBDes', to: '/dashboard/keuangan/apbdes', roles: ['bendahara'] },
+    { icon: RiShoppingBag3Line, label: 'Belanja', to: '/dashboard/keuangan/belanja', roles: ['bendahara'] },
     { icon: RiMapPinLine, label: 'Listing', to: '/dashboard/listing', roles: ['admin'] },
     { icon: RiNewspaperLine, label: 'Berita', to: '/dashboard/berita', roles: ['admin'] },
     { icon: RiImageLine, label: 'Galeri', to: '/dashboard/galeri', roles: ['admin'] },
@@ -43,10 +35,7 @@ const inactiveClass = 'text-[#8B8B90] hover:bg-[#1A1A1D] hover:text-white'
 
 export default function Sidebar({ user, role = 'admin', onLogout }) {
     const location = useLocation()
-    const [openMenus, setOpenMenus] = useState(() => {
-        // Auto-open Keuangan if on a keuangan sub-route
-        return { Keuangan: location.pathname.startsWith('/dashboard/keuangan') }
-    })
+    const [openMenus, setOpenMenus] = useState({})
     const [isLightMode, setIsLightMode] = useState(() => {
         if (typeof window !== 'undefined') {
             return localStorage.getItem('theme') === 'light' || 
