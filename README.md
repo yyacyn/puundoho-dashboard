@@ -27,7 +27,10 @@ dashboard/
 │       ├── Login.jsx            # Form otentikasi
 │       ├── Overview.jsx         # Halaman dashboard depan
 │       ├── Articles.jsx         # CRUD fitur Berita/Artikel
-│       └── Listing.jsx          # CRUD fitur Fasilitas & interaksi Map
+│       ├── Gallery.jsx          # CRUD fitur Galeri Foto
+│       ├── Listing.jsx          # CRUD fitur Fasilitas & interaksi Map
+│       ├── PendudukList.jsx     # Manajemen Dataset kependudukan tahunan
+│       └── PendudukEditor.jsx   # Spreadsheet-like editor untuk data penduduk
 ```
 
 ## Konvensi Desain (UI/UX)
