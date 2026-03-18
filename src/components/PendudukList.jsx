@@ -11,6 +11,12 @@ export default function PendudukList() {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [newYear, setNewYear] = useState(new Date().getFullYear())
     const [isSaving, setIsSaving] = useState(false)
+    const [toast, setToast] = useState(null)
+
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type })
+        setTimeout(() => setToast(null), 3000)
+    }
 
     useEffect(() => {
         fetchDatasets()
@@ -44,12 +50,13 @@ export default function PendudukList() {
                 fetchDatasets()
                 // Navigate to editor immediately
                 navigate(`/dashboard/penduduk/${data.id}`)
+                showToast('Dataset berhasil dibuat!', 'success')
             } else {
                 const err = await res.json()
-                alert(err.error || 'Gagal menambahkan data tahun')
+                showToast(err.error || 'Gagal menambahkan data tahun', 'error')
             }
         } catch (error) {
-            alert('Terjadi kesalahan jaringan')
+            showToast('Terjadi kesalahan jaringan', 'error')
         } finally {
             setIsSaving(false)
         }
@@ -62,9 +69,12 @@ export default function PendudukList() {
             const res = await apiFetch(`/penduduk/datasets/${id}`, { method: 'DELETE' })
             if (res.ok) {
                 setDatasets(datasets.filter(d => d.id !== id))
+                showToast('Dataset berhasil dihapus', 'success')
+            } else {
+                showToast('Gagal menghapus data', 'error')
             }
         } catch (error) {
-            alert('Gagal menghapus data')
+            showToast('Terjadi kesalahan server', 'error')
         }
     }
 
@@ -228,6 +238,15 @@ export default function PendudukList() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Toast */}
+            {toast && (
+                <div className="toast toast-bottom toast-end z-[100] mb-4 mr-4">
+                    <div className={`alert ${toast.type === 'success' ? 'alert-success bg-[#298064] text-white border-0' : 'alert-error bg-red-500/90 text-white border-0'} shadow-lg`}>
+                        <span className="text-sm font-medium">{toast.message}</span>
                     </div>
                 </div>
             )}

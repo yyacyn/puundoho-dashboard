@@ -14,7 +14,8 @@ import {
     RiArrowRightSLine,
     RiMoonLine,
     RiSunLine,
-    RiLogoutBoxRLine
+    RiLogoutBoxRLine,
+    RiFilePaper2Line
 } from 'react-icons/ri'
 
 const navItems = [
@@ -28,6 +29,7 @@ const navItems = [
     { icon: RiNewspaperLine, label: 'Berita', to: '/dashboard/berita', roles: ['admin'] },
     { icon: RiImageLine, label: 'Galeri', to: '/dashboard/galeri', roles: ['admin'] },
     { icon: RiCustomerService2Line, label: 'Pengaduan', to: '/dashboard/pengaduan', roles: ['admin'] },
+    { icon: RiFilePaper2Line, label: 'Pengajuan PPID', to: '/dashboard/pengajuan', roles: ['admin'] },
 ]
 
 const activeClass = 'bg-[#1A1A1D] text-white'

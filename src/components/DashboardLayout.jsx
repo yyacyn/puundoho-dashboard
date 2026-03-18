@@ -6,6 +6,9 @@ import Listing from './Listing'
 import Gallery from './Gallery'
 import PendudukList from './PendudukList'
 import PendudukEditor from './PendudukEditor'
+import Stunting from './Stunting'
+import Pengaduan from './Pengaduan'
+import Pengajuan from './Pengajuan'
 import { RiAlertLine } from 'react-icons/ri'
 
 // Placeholder for pages not yet built
@@ -33,14 +36,15 @@ export default function DashboardLayout({ user, role, onLogout }) {
                     <Route index element={<Overview />} />
                     <Route path="penduduk" element={<PendudukList />} />
                     <Route path="penduduk/:id" element={<PendudukEditor />} />
-                    <Route path="stunting" element={<ComingSoon title="Data Stunting" />} />
+                    <Route path="stunting" element={<Stunting />} />
                     <Route path="idm" element={<ComingSoon title="Indeks Desa Membangun (IDM)" />} />
                     <Route path="keuangan/apbdes" element={<ComingSoon title="APBDes" />} />
                     <Route path="keuangan/belanja" element={<ComingSoon title="Belanja" />} />
                     <Route path="listing" element={<Listing />} />
                     <Route path="berita" element={<Articles />} />
                     <Route path="galeri" element={<Gallery />} />
-                    <Route path="pengaduan" element={<ComingSoon title="Pengaduan Masyarakat" />} />
+                    <Route path="pengaduan" element={<Pengaduan />} />
+                    <Route path="pengajuan" element={<Pengajuan />} />
                     {/* Catch-all inside dashboard */}
                     <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </Routes>

@@ -30,7 +30,9 @@ dashboard/
 │       ├── Gallery.jsx          # CRUD fitur Galeri Foto
 │       ├── Listing.jsx          # CRUD fitur Fasilitas & interaksi Map
 │       ├── PendudukList.jsx     # Manajemen Dataset kependudukan tahunan
-│       └── PendudukEditor.jsx   # Spreadsheet-like editor untuk data penduduk
+│       ├── PendudukEditor.jsx   # Spreadsheet-like editor untuk data penduduk
+│       ├── PengaduanList.jsx    # Laporan form masyarakat dengan pop-up modal
+│       └── Pengajuan.jsx        # Manajemen admin untuk Pengajuan PPID dokumen desa
 ```
 
 ## Konvensi Desain (UI/UX)

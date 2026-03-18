@@ -34,6 +34,12 @@ export default function Articles() {
     const [sortDir, setSortDir] = useState('desc')
     const [showForm, setShowForm] = useState(false)
     const [editTarget, setEditTarget] = useState(null)
+    const [toast, setToast] = useState(null)
+
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type })
+        setTimeout(() => setToast(null), 3000)
+    }
 
     // Fetch articles from API
     const fetchArticles = async () => {
@@ -90,6 +96,9 @@ export default function Articles() {
                 if (res.ok) {
                     const updated = await res.json()
                     setArticles(prev => prev.map(a => a.id === editTarget.id ? updated : a))
+                    showToast('Artikel berhasil diperbarui!', 'success')
+                } else {
+                    showToast('Gagal memperbarui artikel', 'error')
                 }
             } else {
                 const res = await apiFetch('/articles', {
@@ -99,10 +108,14 @@ export default function Articles() {
                 if (res.ok) {
                     const created = await res.json()
                     setArticles(prev => [created, ...prev])
+                    showToast('Artikel berhasil dibuat!', 'success')
+                } else {
+                    showToast('Gagal membuat artikel', 'error')
                 }
             }
         } catch (err) {
             console.error('Failed to save:', err)
+            showToast('Terjadi kesalahan pada server', 'error')
         }
         setShowForm(false)
     }
@@ -311,6 +324,15 @@ export default function Articles() {
                     onClose={() => setShowForm(false)}
                     onSave={handleSave}
                 />
+            )}
+
+            {/* Toast */}
+            {toast && (
+                <div className="toast toast-bottom toast-end z-[100] mb-4 mr-4">
+                    <div className={`alert ${toast.type === 'success' ? 'alert-success bg-[#298064] text-white border-0' : 'alert-error bg-red-500/90 text-white border-0'} shadow-lg`}>
+                        <span className="text-sm font-medium">{toast.message}</span>
+                    </div>
+                </div>
             )}
         </div>
     )

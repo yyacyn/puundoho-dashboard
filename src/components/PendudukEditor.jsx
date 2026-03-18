@@ -90,6 +90,12 @@ export default function PendudukEditor() {
     const [isExporting, setIsExporting] = useState(false)
     const [isAddModalOpen, setIsAddModalOpen] = useState(false)
     const [mappingData, setMappingData] = useState(null) // { headers, rawData }
+    const [toast, setToast] = useState(null)
+
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type })
+        setTimeout(() => setToast(null), 3000)
+    }
 
     const fetchData = useCallback(async () => {
         setLoading(true)
@@ -178,8 +184,9 @@ export default function PendudukEditor() {
                         body: JSON.stringify({ [columnId]: value })
                     })
                     if (!res.ok) throw new Error('Failed to save')
+                    showToast('Berhasil diperbarui', 'success')
                 } catch (error) {
-                    alert('Gagal menyimpan perubahan. Data akan dikembalikan.')
+                    showToast('Gagal menyimpan perubahan. Data akan dikembalikan.', 'error')
                     fetchData() // Refresh on error
                 }
             }
@@ -192,9 +199,12 @@ export default function PendudukEditor() {
             const res = await apiFetch(`/penduduk/records/${recordId}`, { method: 'DELETE' })
             if (res.ok) {
                 setData(old => old.filter(row => row.id !== recordId))
+                showToast('Baris berhasil dihapus', 'success')
+            } else {
+                showToast('Gagal menghapus data', 'error')
             }
         } catch (error) {
-            alert('Gagal menghapus')
+            showToast('Terjadi kesalahan server', 'error')
         }
     }
 
@@ -286,7 +296,7 @@ export default function PendudukEditor() {
                     rawData: dataObjects
                 })
             } catch (error) {
-                alert('Error parsing file: ' + error.message)
+                showToast('Error parsing file: ' + error.message, 'error')
             } finally {
                 e.target.value = null // Reset input
             }
@@ -305,14 +315,14 @@ export default function PendudukEditor() {
 
             if (res.ok) {
                 const result = await res.json()
-                alert(`Import Berhasil! ${result.message}`)
+                showToast(`Import Berhasil! ${result.message}`, 'success')
                 fetchData()
             } else {
                 const err = await res.json()
-                alert(err.error || 'Import Gagal')
+                showToast(err.error || 'Import Gagal', 'error')
             }
         } catch (error) {
-            alert('Request error: ' + error.message)
+            showToast('Request error: ' + error.message, 'error')
         } finally {
             setIsImporting(false)
         }
@@ -327,12 +337,13 @@ export default function PendudukEditor() {
             if (res.ok) {
                 fetchData()
                 setIsAddModalOpen(false)
+                showToast('Data penduduk berhasil ditambahkan!', 'success')
             } else {
                 const err = await res.json()
-                alert(err.error || 'Gagal menambah data')
+                showToast(err.error || 'Gagal menambah data', 'error')
             }
         } catch (error) {
-            alert('Gagal menambah baris')
+            showToast('Terjadi kesalahan server', 'error')
         }
     }
 
@@ -349,8 +360,9 @@ export default function PendudukEditor() {
             XLSX.utils.book_append_sheet(wb, ws, "Data Penduduk")
             
             XLSX.writeFile(wb, `Data_Penduduk_${dataset?.tahun || 'Export'}.xlsx`)
+            showToast('Berhasil mengekspor data ke Excel', 'success')
         } catch (error) {
-            alert('Export gagal: ' + error.message)
+            showToast('Export gagal: ' + error.message, 'error')
         } finally {
             setIsExporting(false)
         }
@@ -419,23 +431,36 @@ export default function PendudukEditor() {
 
             {/* Table Area */}
             <div className="flex-1 overflow-auto bg-[#0A0A0B]">
-                {loading ? (
-                    <div className="flex items-center justify-center h-full text-[#6B6B70]">Memuat dataset...</div>
-                ) : (
-                    <table className="w-full text-left border-collapse min-w-[1200px]">
-                        <thead className="sticky top-0 z-10 bg-[#141417]">
-                            {table.getHeaderGroups().map(headerGroup => (
-                                <tr key={headerGroup.id} className="border-b border-[#2A2A2E] resident-table-header-row">
-                                    {headerGroup.headers.map(header => (
-                                        <th key={header.id} className="px-3 py-4 text-[10px] font-bold text-[#6B6B70] uppercase tracking-wider bg-[#111113]">
-                                            {flexRender(header.column.columnDef.header, header.getContext())}
-                                        </th>
-                                    ))}
-                                </tr>
-                            ))}
-                        </thead>
-                        <tbody className="resident-table-tbody">
-                            {table.getRowModel().rows.map(row => (
+                <table className="w-full text-left border-collapse min-w-[1200px]">
+                    <thead className="sticky top-0 z-10 bg-[#141417]">
+                        {table.getHeaderGroups().map(headerGroup => (
+                            <tr key={headerGroup.id} className="border-b border-[#2A2A2E] resident-table-header-row">
+                                {headerGroup.headers.map(header => (
+                                    <th key={header.id} className="px-3 py-4 text-[10px] font-bold text-[#6B6B70] uppercase tracking-wider bg-[#111113]">
+                                        {flexRender(header.column.columnDef.header, header.getContext())}
+                                    </th>
+                                ))}
+                            </tr>
+                        ))}
+                    </thead>
+                    <tbody className="resident-table-tbody">
+                        {loading ? (
+                            <tr>
+                                <td colSpan={columns.length} className="text-center py-10 bg-[#141417] text-[#8B8B90] text-sm">
+                                    <div className="flex items-center justify-center gap-2">
+                                        <div className="w-5 h-5 border-2 border-[#298064] border-t-transparent rounded-full animate-spin"></div>
+                                        <span>Memuat dataset...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        ) : data.length === 0 ? (
+                            <tr>
+                                <td colSpan={columns.length} className="text-center py-10 bg-[#141417] text-[#8B8B90] text-sm">
+                                    Tidak ada data penduduk
+                                </td>
+                            </tr>
+                        ) : (
+                            table.getRowModel().rows.map(row => (
                                 <tr key={row.id} className="border-b border-[#1F1F23] hover:bg-[#1A1A1D] transition-colors group resident-table-row">
                                     {row.getVisibleCells().map(cell => (
                                         <td key={cell.id} className="px-3 py-1 text-[13px] text-[#ADADB0] focus-within:text-white bg-[#141417]">
@@ -443,10 +468,10 @@ export default function PendudukEditor() {
                                         </td>
                                     ))}
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                )}
+                            ))
+                        )}
+                    </tbody>
+                </table>
             </div>
 
             {/* Pagination footer */}
@@ -491,6 +516,15 @@ export default function PendudukEditor() {
                     onClose={() => setIsAddModalOpen(false)} 
                     onSave={handleAddRow} 
                 />
+            )}
+
+            {/* Toast */}
+            {toast && (
+                <div className="toast toast-bottom toast-end z-[100] mb-4 mr-4">
+                    <div className={`alert ${toast.type === 'success' ? 'alert-success bg-[#298064] text-white border-0' : 'alert-error bg-red-500/90 text-white border-0'} shadow-lg`}>
+                        <span className="text-sm font-medium">{toast.message}</span>
+                    </div>
+                </div>
             )}
         </div>
     )

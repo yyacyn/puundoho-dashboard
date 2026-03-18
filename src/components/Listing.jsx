@@ -71,6 +71,12 @@ export default function Listing() {
     const [sortDir, setSortDir] = useState('desc')
     const [showForm, setShowForm] = useState(false)
     const [editTarget, setEditTarget] = useState(null)
+    const [toast, setToast] = useState(null)
+
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type })
+        setTimeout(() => setToast(null), 3000)
+    }
 
     // Fetch listings from API
     const fetchListings = async () => {
@@ -123,6 +129,9 @@ export default function Listing() {
                 if (res.ok) {
                     const updated = await res.json()
                     setListings(prev => prev.map(l => l.id === editTarget.id ? updated : l))
+                    showToast('Fasilitas berhasil diperbarui!', 'success')
+                } else {
+                    showToast('Gagal memperbarui fasilitas', 'error')
                 }
             } else {
                 const res = await apiFetch('/listings', {
@@ -132,12 +141,16 @@ export default function Listing() {
                 if (res.ok) {
                     const created = await res.json()
                     setListings(prev => [created, ...prev])
+                    showToast('Fasilitas berhasil ditambahkan!', 'success')
+                } else {
+                    showToast('Gagal menambahkan fasilitas', 'error')
                 }
             }
             setShowForm(false)
             setEditTarget(null)
         } catch (err) {
             console.error('Failed to save listing:', err)
+            showToast('Terjadi kesalahan server', 'error')
             throw err
         }
     }
@@ -326,6 +339,15 @@ export default function Listing() {
                     onClose={() => { setShowForm(false); setEditTarget(null) }}
                     onSave={handleSave}
                 />
+            )}
+
+            {/* Toast */}
+            {toast && (
+                <div className="toast toast-bottom toast-end z-[100] mb-4 mr-4">
+                    <div className={`alert ${toast.type === 'success' ? 'alert-success bg-[#298064] text-white border-0' : 'alert-error bg-red-500/90 text-white border-0'} shadow-lg`}>
+                        <span className="text-sm font-medium">{toast.message}</span>
+                    </div>
+                </div>
             )}
         </div>
     )

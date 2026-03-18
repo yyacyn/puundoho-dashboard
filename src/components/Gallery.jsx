@@ -27,6 +27,12 @@ export default function Gallery() {
     const [search, setSearch] = useState('')
     const [showForm, setShowForm] = useState(false)
     const [editTarget, setEditTarget] = useState(null)
+    const [toast, setToast] = useState(null)
+
+    const showToast = (message, type = 'success') => {
+        setToast({ message, type })
+        setTimeout(() => setToast(null), 3000)
+    }
 
     const fetchGallery = async () => {
         try {
@@ -110,6 +116,9 @@ export default function Gallery() {
                 if (res.ok) {
                     const updated = await res.json()
                     setItems(prev => prev.map(item => item.id === editTarget.id ? updated : item))
+                    showToast('Item galeri berhasil diperbarui', 'success')
+                } else {
+                    showToast('Gagal memperbarui galeri', 'error')
                 }
             } else {
                 const res = await apiFetch('/galeri', {
@@ -119,12 +128,16 @@ export default function Gallery() {
                 if (res.ok) {
                     const created = await res.json()
                     setItems(prev => [created, ...prev])
+                    showToast('Item galeri berhasil ditambahkan', 'success')
+                } else {
+                    showToast('Gagal menambahkan galeri', 'error')
                 }
             }
             setShowForm(false)
             setEditTarget(null)
         } catch (err) {
             console.error('Failed to save gallery item:', err)
+            showToast('Terjadi kesalahan server', 'error')
         }
     }
 
@@ -241,6 +254,15 @@ export default function Gallery() {
                     onClose={() => { setShowForm(false); setEditTarget(null) }}
                     onSave={handleSave}
                 />
+            )}
+
+            {/* Toast */}
+            {toast && (
+                <div className="toast toast-bottom toast-end z-[100] mb-4 mr-4">
+                    <div className={`alert ${toast.type === 'success' ? 'alert-success bg-[#298064] text-white border-0' : 'alert-error bg-red-500/90 text-white border-0'} shadow-lg`}>
+                        <span className="text-sm font-medium">{toast.message}</span>
+                    </div>
+                </div>
             )}
         </div>
     )
