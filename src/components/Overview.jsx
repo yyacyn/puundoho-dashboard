@@ -331,11 +331,6 @@ export default function Overview() {
     return (
         <div className="flex flex-col gap-7 px-10 py-8">
 
-            {/* Breadcrumb */}
-            <div className="flex items-center gap-2">
-                <span className="text-white text-xs font-medium">Overview</span>
-            </div>
-
             {/* Page Header & Quick Actions */}
             <div className="flex items-start justify-between">
                 <div className="flex flex-col gap-2">

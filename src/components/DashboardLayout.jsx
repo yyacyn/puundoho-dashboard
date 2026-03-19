@@ -9,6 +9,7 @@ import PendudukEditor from './PendudukEditor'
 import Stunting from './Stunting'
 import DusunList from './DusunList'
 import IdmSdgs from './IdmSdgs'
+import Bansos from './Bansos'
 import Pengaduan from './Pengaduan'
 import Pengajuan from './Pengajuan'
 import { RiAlertLine } from 'react-icons/ri'
@@ -39,6 +40,7 @@ export default function DashboardLayout({ user, role, onLogout }) {
                     <Route path="penduduk" element={<PendudukList />} />
                     <Route path="penduduk/:id" element={<PendudukEditor />} />
                     <Route path="stunting" element={<Stunting />} />
+                    <Route path="bansos" element={<Bansos />} />
                     <Route path="dusun" element={<DusunList />} />
                     <Route path="idm-sdgs" element={<IdmSdgs />} />
                     <Route path="keuangan/apbdes" element={<ComingSoon title="APBDes" />} />
