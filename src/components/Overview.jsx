@@ -12,7 +12,70 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
 } from 'recharts'
+import 'leaflet/dist/leaflet.css'
+import { MapContainer, TileLayer, GeoJSON, useMap, Tooltip as MapTooltip } from 'react-leaflet'
+import L from 'leaflet'
 import { apiFetch } from '../api'
+
+// Subcomponents for Interactive Map
+function MapBounds({ dusuns }) {
+    const map = useMap();
+    useEffect(() => {
+        if (!dusuns || dusuns.length === 0) return;
+        let bounds = L.latLngBounds()
+        let hasValidBounds = false;
+        
+        dusuns.forEach(d => {
+            if (d.geojson_data) {
+                try {
+                    const geo = JSON.parse(d.geojson_data)
+                    const layer = L.geoJSON(geo)
+                    bounds.extend(layer.getBounds())
+                    hasValidBounds = true
+                } catch(e) {}
+            }
+        })
+
+        if (hasValidBounds) {
+            map.fitBounds(bounds, { padding: [20, 20], maxZoom: 15 });
+        }
+    }, [dusuns, map]);
+    return null;
+}
+
+function BaseVillageBoundary() {
+    const [geoData, setGeoData] = useState(null)
+    const map = useMap();
+
+    useEffect(() => {
+        fetch('/puundoho_boundary.geojson')
+            .then(res => res.json())
+            .then(data => {
+                setGeoData(data)
+                try {
+                     const layer = L.geoJSON(data)
+                     map.fitBounds(layer.getBounds())
+                } catch(e) {}
+            })
+            .catch(err => console.error("Error loading base map", err))
+    }, [map])
+
+    if (!geoData) return null;
+
+    return (
+        <GeoJSON 
+            data={geoData} 
+            style={{
+                color: '#EAB308',
+                weight: 4,
+                opacity: 0.8,
+                fillOpacity: 0.05,
+                dashArray: '5, 10'
+            }}
+            interactive={false}
+        />
+    )
+}
 
 // Dummy transactions because we don't have a transaction log table yet
 const defaultTransactions = [
@@ -27,6 +90,8 @@ export default function Overview() {
     const [selectedDusun, setSelectedDusun] = useState('Semua')
     const [selectedWaktu, setSelectedWaktu] = useState('Tahun Ini')
     const [refreshTrigger, setRefreshTrigger] = useState(0)
+    const [mapLayer, setMapLayer] = useState('umum') // 'umum', 'agama', 'umur', 'gender'
+    const [sidePanelMode, setSidePanelMode] = useState('agama') // 'agama', 'umur', 'gender'
     
     // API Data States
     const [datasets, setDatasets] = useState([])
@@ -37,6 +102,7 @@ export default function Overview() {
     
     const [totalArticles, setTotalArticles] = useState(0)
     const [galleryItems, setGalleryItems] = useState([])
+    const [mapDusuns, setMapDusuns] = useState([])
 
     // Dummy values for unimplemented endpoints
     const [kasusStunting] = useState(16)
@@ -69,6 +135,13 @@ export default function Overview() {
                 if (resArt.ok) {
                     const dataArt = await resArt.json()
                     setTotalArticles((dataArt.articles || []).length)
+                }
+
+                // 4. Fetch Dusun Boundaries for Map
+                const resDusun = await apiFetch('/dusun')
+                if (resDusun.ok) {
+                    const dataDusun = await resDusun.json()
+                    setMapDusuns(dataDusun.dusun || [])
                 }
 
             } catch (error) {
@@ -185,6 +258,75 @@ export default function Overview() {
             .sort((a, b) => a.name.localeCompare(b.name))
     }, [statsData])
 
+    // 4. Combine Dusun boundaries with demographic stats for Map Tooltip
+    const combinedMapDusuns = useMemo(() => {
+        return mapDusuns.map(d => {
+            const dusunNameKey = d.nama_dusun
+            const statItem = dusunArray.find(s => s.name.toLowerCase() === dusunNameKey.toLowerCase()) || {}
+            
+            const getBreakdown = (sourceDict) => {
+                if (!sourceDict) return {}
+                const breakdown = {}
+                for (const [key, dusunMap] of Object.entries(sourceDict)) {
+                    // Match either direct name, uppercased, or exact map representation
+                    const val = dusunMap[dusunNameKey] || dusunMap[dusunNameKey.toUpperCase()] || 0
+                    if (val > 0) breakdown[key] = val
+                }
+                return breakdown
+            }
+
+            return {
+                ...d,
+                penduduk: statItem.penduduk || 0,
+                stunting: statItem.stunting || 0,
+                agama: getBreakdown(statsData?.religion_by_dusun),
+                umur: getBreakdown(statsData?.age_by_dusun),
+                gender: getBreakdown(statsData?.gender_by_dusun)
+            }
+        })
+    }, [mapDusuns, dusunArray, statsData])
+
+    // 5. Agama Data Array
+    const agamaArray = useMemo(() => {
+        if (!statsData || !statsData.religion) return []
+        const entries = Object.entries(statsData.religion).map(([name, count]) => ({ name, value: count }))
+        entries.sort((a, b) => b.value - a.value)
+        const max = entries.length > 0 ? entries[0].value : 1
+        return entries.map(e => ({ ...e, pct: (e.value / max) * 100 }))
+    }, [statsData])
+
+    // 6. Umur Data Array
+    const umurArray = useMemo(() => {
+        if (!statsData || !statsData.age_range) return []
+        const entries = Object.entries(statsData.age_range).map(([name, count]) => ({ name, value: count }))
+        let max = 1
+        entries.forEach(e => { if(e.value > max) max = e.value })
+        return entries.map(e => ({ ...e, pct: (e.value / max) * 100 }))
+    }, [statsData])
+
+    // 7. Dynamic Data for Side Panel
+    const sidePanelData = useMemo(() => {
+        let array = []
+        let color = 'bg-blue-500'
+        let title = 'Distribusi Demografi'
+        
+        if (sidePanelMode === 'agama') {
+            array = agamaArray
+            color = 'bg-blue-500'
+            title = 'Distribusi Agama'
+        } else if (sidePanelMode === 'umur') {
+            array = umurArray
+            color = 'bg-[#298064]'
+            title = 'Rentang Umur Penduduk'
+        } else if (sidePanelMode === 'gender') {
+            let maxVal = 1
+            genderArray.forEach(g => { if(g.value > maxVal) maxVal = g.value })
+            array = genderArray.map(g => ({ ...g, pct: (g.value / maxVal) * 100 }))
+            color = 'bg-[#EC4899]'
+            title = 'Demografi Gender'
+        }
+        return { array, color, title }
+    }, [sidePanelMode, agamaArray, umurArray, genderArray])
 
     return (
         <div className="flex flex-col gap-7 px-10 py-8">
@@ -385,8 +527,124 @@ export default function Overview() {
                 </div>
             </div>
 
+            {/* Interactive Map & Side Demographics */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-4">
+                <div className="lg:col-span-2 flex flex-col gap-4">
+                    <div className="flex items-center justify-between">
+                        <span className="text-white text-sm font-semibold">Peta Persebaran Demografi (Interaktif)</span>
+                        <select 
+                            value={mapLayer} 
+                            onChange={e => setMapLayer(e.target.value)}
+                            className="bg-[#1A1A1D] border border-[#2A2A2E] text-[#ADADB0] text-xs font-medium rounded-md outline-none px-2 py-1.5 focus:border-[#298064] cursor-pointer"
+                        >
+                            <option value="umum">Umum (Total & Stunting)</option>
+                            <option value="agama">Distribusi Agama</option>
+                            <option value="umur">Rentang Umur</option>
+                            <option value="gender">Gender</option>
+                        </select>
+                    </div>
+                    <div className="h-[450px] w-full rounded-xl overflow-hidden border border-[#1F1F23] bg-[#141417] relative z-0 map-dark-mode">
+                        <MapContainer center={[-3.1, 121.08]} zoom={13} scrollWheelZoom={true} style={{ height: '100%', width: '100%' }}>
+                        <TileLayer
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        />
+                        <BaseVillageBoundary />
+                        <MapBounds dusuns={combinedMapDusuns} />
+                        {combinedMapDusuns.map(dusun => {
+                            if (!dusun.geojson_data) return null;
+                            try {
+                                const geom = JSON.parse(dusun.geojson_data);
+                                return (
+                                    <GeoJSON 
+                                        key={dusun.id + dusun.warna} // re-render on color change
+                                        data={geom} 
+                                        style={{ color: dusun.warna || '#3B82F6', fillColor: dusun.warna || '#3B82F6', fillOpacity: 0.5, weight: 2 }}
+                                    >
+                                        <MapTooltip sticky>
+                                            <div className="p-1 min-w-[130px] font-sans">
+                                                <div className="font-bold border-b border-gray-200 pb-1.5 mb-1.5 text-sm">{dusun.nama_dusun}</div>
+                                                
+                                                {mapLayer === 'umum' && (
+                                                    <>
+                                                        <div className="flex justify-between items-center text-xs mb-1">
+                                                            <span className="text-gray-600">Total Penduduk:</span>
+                                                            <span className="font-bold text-gray-800">{dusun.penduduk} Jiwa</span>
+                                                        </div>
+                                                        <div className="flex justify-between items-center text-xs">
+                                                            <span className="text-gray-600">Kasus Stunting:</span>
+                                                            <span className="font-bold text-orange-600">{dusun.stunting} Kasus</span>
+                                                        </div>
+                                                    </>
+                                                )}
+
+                                                {mapLayer !== 'umum' && (
+                                                    <div className="flex flex-col gap-1.5">
+                                                        <div className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider mb-0.5 border-b border-gray-200 pb-1">
+                                                            Berdasarkan {mapLayer}
+                                                        </div>
+                                                        {Object.entries(dusun[mapLayer] || {}).map(([k, v]) => (
+                                                            <div key={k} className="flex justify-between items-center text-xs">
+                                                                <span className="text-gray-600 mr-3">{k}:</span>
+                                                                <span className="font-bold text-blue-600">{v}</span>
+                                                            </div>
+                                                        ))}
+                                                        {Object.keys(dusun[mapLayer] || {}).length === 0 && (
+                                                            <span className="text-xs text-gray-400 italic">Data kosong</span>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </MapTooltip>
+                                    </GeoJSON>
+                                );
+                            } catch (e) { return null; }
+                        })}
+                    </MapContainer>
+                </div>
+                </div>
+
+                {/* Side Demographics */}
+                <div className="flex flex-col gap-5">
+                    <div className="flex flex-col gap-3 p-5 rounded-xl bg-[#141417] border border-[#1F1F23] flex-1">
+                        <div className="flex items-center justify-between">
+                            <span className="text-white text-sm font-semibold">{sidePanelData.title}</span>
+                            <select 
+                                value={sidePanelMode} 
+                                onChange={e => setSidePanelMode(e.target.value)}
+                                className="bg-[#1A1A1D] border border-[#2A2A2E] text-[#ADADB0] text-[11px] font-medium rounded-md outline-none px-2 py-1 focus:border-[#298064] cursor-pointer"
+                            >
+                                <option value="agama">Agama</option>
+                                <option value="umur">Umur</option>
+                                <option value="gender">Gender</option>
+                            </select>
+                        </div>
+                        <div className="flex flex-col gap-3 mt-1 overflow-y-auto pr-1">
+                            {statsLoading ? (
+                                <span className="text-[#6B6B70] text-sm text-center py-4">Memuat data...</span>
+                            ) : sidePanelData.array.length === 0 ? (
+                                <span className="text-[#6B6B70] text-sm text-center py-4">Data tidak tersedia</span>
+                            ) : sidePanelData.array.map((item, i) => (
+                                <div key={i} className="flex flex-col gap-1.5">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[#ADADB0] text-[13px]">{item.name}</span>
+                                        <span className="text-white font-mono text-[13px]">{item.value}</span>
+                                    </div>
+                                    <div className="h-1.5 w-full bg-[#1A1A1D] rounded-full overflow-hidden flex items-center">
+                                        <div 
+                                            className={`h-full rounded-full ${item.color ? '' : sidePanelData.color}`} 
+                                            style={{ width: `${item.pct}%`, backgroundColor: item.color ? item.color : undefined }} 
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {/* Gallery */}
-            <div className="flex flex-col gap-4 mt-2 pb-4">
+            <div className="flex flex-col gap-4 mt-4 pb-4">
                 <div className="flex items-center justify-between">
                     <span className="text-white text-sm font-semibold">Galeri Kegiatan Terbaru</span>
                     <button 
