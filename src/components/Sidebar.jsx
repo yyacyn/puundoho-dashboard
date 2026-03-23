@@ -28,7 +28,7 @@ const navItems = [
     { icon: RiMap2Line, label: 'Dusun Desa', to: '/dashboard/dusun', roles: ['admin'] },
     { icon: RiBarChartBoxLine, label: 'IDM & SDGs', to: '/dashboard/idm-sdgs', roles: ['admin'] },
     { icon: RiBarChartBoxLine, label: 'APBDes', to: '/dashboard/keuangan/apbdes', roles: ['bendahara'] },
-    { icon: RiShoppingBag3Line, label: 'Belanja', to: '/dashboard/keuangan/belanja', roles: ['bendahara'] },
+    { icon: RiShoppingBag3Line, label: 'Produk Desa', to: '/dashboard/keuangan/belanja', roles: ['bendahara'] },
     { icon: RiMapPinLine, label: 'Listing', to: '/dashboard/listing', roles: ['admin'] },
     { icon: RiNewspaperLine, label: 'Berita', to: '/dashboard/berita', roles: ['admin'] },
     { icon: RiImageLine, label: 'Galeri', to: '/dashboard/galeri', roles: ['admin'] },

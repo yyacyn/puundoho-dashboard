@@ -95,7 +95,7 @@ export default function PengaduanList() {
                                             {d.foto_url && <RiImageLine size={14} className="text-[#6B6B70] shrink-0" title="Ada Lampiran Foto" />}
                                         </div>
                                     </td>
-                                    <td className="px-5 py-4 bg-[#141417] text-[#6B6B70] text-[13px]">{new Date(d.date).toLocaleDateString('id-ID')}</td>
+                                    <td className="px-5 py-4 bg-[#141417] text-[#8B8B90] text-[13px] whitespace-nowrap">{new Date(d.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
                                     <td className="px-5 py-4 bg-[#141417]">
                                         <span className={`inline-flex px-2 py-1 rounded text-[11px] font-medium 
                                             ${d.status === 'Baru' ? 'bg-blue-500/10 text-blue-400' : 
