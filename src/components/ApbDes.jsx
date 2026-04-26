@@ -26,7 +26,7 @@ export default function ApbDes() {
     const [selectedYear, setSelectedYear] = useState(null)
 
     const currentY = new Date().getFullYear()
-    const availableYearsForDropdown = Array.from({length: 10}, (_, i) => currentY - 2 + i)
+    const availableYearsForDropdown = Array.from({ length: 10 }, (_, i) => currentY - 2 + i)
     const [form, setForm] = useState({ tahun: currentY, kategori: '', bidang: '', jumlah: '' })
 
     // Fetch APBD list
@@ -51,14 +51,17 @@ export default function ApbDes() {
         if (!apbdId) return
         setSubLoading(true)
         try {
-            const [resP, resK] = await Promise.all([
-                apiFetch(`/apbdes/${apbdId}/pendapatan`, { cache: 'no-store' }),
-                apiFetch(`/apbdes/${apbdId}/pengeluaran`, { cache: 'no-store' })
-            ])
-            const dataP = await resP.json()
-            const dataK = await resK.json()
-            setPendapatanData(dataP.pendapatan || [])
-            setPengeluaranData(dataK.pengeluaran || [])
+            const resP = await apiFetch(`/apbdes/${apbdId}/pendapatan`, { cache: 'no-store' });
+            const dataP = await resP.json();
+            const pList = dataP.pendapatan || [];
+
+            const resK = await apiFetch(`/apbdes/${apbdId}/pengeluaran`, { cache: 'no-store' });
+            const dataK = await resK.json();
+            const kList = dataK.pengeluaran || [];
+
+            // Update state secara eksplisit
+            setPendapatanData(pList);
+            setPengeluaranData(kList);
         } catch (err) {
             console.error('Fetch sub-data error:', err)
         } finally {
@@ -112,9 +115,9 @@ export default function ApbDes() {
             if (existingApbd) {
                 targetApbdId = existingApbd.id
             } else {
-                const res = await apiFetch('/apbdes', { 
-                    method: 'POST', 
-                    body: JSON.stringify({ tahun: Number(form.tahun), total_pendapatan: 0, total_pengeluaran: 0 }) 
+                const res = await apiFetch('/apbdes', {
+                    method: 'POST',
+                    body: JSON.stringify({ tahun: Number(form.tahun), total_pendapatan: 0, total_pengeluaran: 0 })
                 })
                 const data = await res.json()
                 targetApbdId = data.id
@@ -135,7 +138,7 @@ export default function ApbDes() {
                     await apiFetch('/apbdes/pengeluaran', { method: 'POST', body: JSON.stringify(body) })
                 }
             }
-            
+
             if (targetApbdId !== selectedYear) {
                 setSelectedYear(targetApbdId)
             } else {
@@ -290,11 +293,11 @@ export default function ApbDes() {
                     </button>
                 </div>
                 <button
-                    onClick={() => { 
+                    onClick={() => {
                         setEditingId(null)
                         const currentApbdYear = selectedYear ? apbdList.find(a => a.id === selectedYear)?.tahun : currentY
                         setForm({ tahun: currentApbdYear || currentY, kategori: '', bidang: '', jumlah: '' })
-                        setIsModalOpen(true) 
+                        setIsModalOpen(true)
                     }}
                     className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[#298064] hover:bg-[#1f6b50] text-white text-sm font-semibold transition-colors shadow-sm"
                 >
