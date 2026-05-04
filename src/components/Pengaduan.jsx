@@ -13,8 +13,8 @@ export default function PengaduanList() {
         { id: 3, nama: 'Budi Santoso', kategori: 'Lingkungan', isi: 'Sampah menumpuk di area lapangan terbuka', foto_url: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&q=80', status: 'Selesai', date: '2026-03-15' },
     ])
 
-    const filteredData = pengaduanData.filter(item =>
-        item.nama.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const filteredData = pengaduanData.filter(item => 
+        item.nama.toLowerCase().includes(searchTerm.toLowerCase()) || 
         item.kategori.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.isi.toLowerCase().includes(searchTerm.toLowerCase())
     )
@@ -75,8 +75,8 @@ export default function PengaduanList() {
                             </tr>
                         ) : (
                             filteredData.map((d, i) => (
-                                <tr
-                                    key={d.id}
+                                <tr 
+                                    key={d.id} 
                                     onClick={() => {
                                         setImgLoading(true)
                                         setSelectedPengaduan(d)
@@ -98,9 +98,9 @@ export default function PengaduanList() {
                                     <td className="px-5 py-4 bg-[#141417] text-[#8B8B90] text-[13px] whitespace-nowrap">{new Date(d.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
                                     <td className="px-5 py-4 bg-[#141417]">
                                         <span className={`inline-flex px-2 py-1 rounded text-[11px] font-medium 
-                                            ${d.status === 'Baru' ? 'bg-blue-500/10 text-blue-400' :
-                                                d.status === 'Proses' ? 'bg-orange-500/10 text-orange-400' :
-                                                    'bg-green-500/10 text-green-400'}`}
+                                            ${d.status === 'Baru' ? 'bg-blue-500/10 text-blue-400' : 
+                                              d.status === 'Proses' ? 'bg-orange-500/10 text-orange-400' : 
+                                              'bg-green-500/10 text-green-400'}`}
                                         >
                                             {d.status}
                                         </span>
@@ -159,16 +159,16 @@ export default function PengaduanList() {
                                 <div>
                                     <span className="block text-[11px] font-semibold text-[#6B6B70] uppercase mb-1">Status</span>
                                     <span className={`inline-flex px-2 py-1 rounded text-[11px] font-medium 
-                                            ${selectedPengaduan.status === 'Baru' ? 'bg-blue-500/10 text-blue-400' :
-                                            selectedPengaduan.status === 'Proses' ? 'bg-orange-500/10 text-orange-400' :
-                                                'bg-green-500/10 text-green-400'}`}
+                                            ${selectedPengaduan.status === 'Baru' ? 'bg-blue-500/10 text-blue-400' : 
+                                              selectedPengaduan.status === 'Proses' ? 'bg-orange-500/10 text-orange-400' : 
+                                              'bg-green-500/10 text-green-400'}`}
                                     >
                                         {selectedPengaduan.status}
                                     </span>
                                 </div>
                             </div>
-
-
+                            
+                            
                             <div>
                                 <span className="block text-[11px] font-semibold text-[#6B6B70] uppercase mb-2">Isi Laporan</span>
                                 <div className="p-4 rounded-lg bg-[#0A0A0B] border border-[#1F1F23] text-[#ADADB0] leading-relaxed">
@@ -185,9 +185,9 @@ export default function PengaduanList() {
                                                 <RiLoader4Line className="animate-spin text-[#6B6B70]" size={24} />
                                             </div>
                                         )}
-                                        <img
-                                            src={selectedPengaduan.foto_url}
-                                            alt="Lampiran Pengaduan"
+                                        <img 
+                                            src={selectedPengaduan.foto_url} 
+                                            alt="Lampiran Pengaduan" 
                                             className={`w-full h-auto max-h-[250px] object-cover transition-opacity duration-300 ${imgLoading ? 'opacity-0' : 'opacity-100'}`}
                                             onLoad={() => setImgLoading(false)}
                                         />
