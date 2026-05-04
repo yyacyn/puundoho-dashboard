@@ -20,29 +20,60 @@ export default function Bansos() {
         nama_program: '', dusun: 'Dusun 1', nik: '', nama: '', status: 'Menunggu', tanggal: '', keterangan: ''
     })
 
+    const loadBansos = async () => {
+        try {
+            setError('')
+            const res = await apiFetch('/bansos')
+            if (!res.ok) throw new Error('Gagal mengambil data bansos')
+
+            const data = await res.json()
+            setBansosData(data.bansos || [])
+        } catch (err) {
+            console.error(err)
+            setError('Gagal memuat data bansos dari server')
+        }
+    }
+
     useEffect(() => {
+        let isMounted = true
+
         const fetchPenduduk = async () => {
             try {
                 const resDS = await apiFetch('/penduduk/datasets')
                 if (!resDS.ok) return
                 const datasets = await resDS.json()
                 if (!datasets || datasets.length === 0) return
-                
-                const newestId = datasets.sort((a,b) => b.tahun - a.tahun)[0].id
+
+                const newestId = datasets.sort((a, b) => b.tahun - a.tahun)[0].id
                 const resRec = await apiFetch(`/penduduk/datasets/${newestId}/records`)
                 if (!resRec.ok) return
                 const dataRec = await resRec.json()
-                setPendudukList(dataRec.penduduk || [])
+                if (isMounted) {
+                    setPendudukList(dataRec.penduduk || [])
+                }
             } catch (err) {
                 console.error(err)
             }
         }
-        fetchPenduduk()
+
+        const fetchInitialData = async () => {
+            setLoading(true)
+            await Promise.all([fetchPenduduk(), loadBansos()])
+            if (isMounted) {
+                setLoading(false)
+            }
+        }
+
+        fetchInitialData()
+
+        return () => {
+            isMounted = false
+        }
     }, [])
 
     const handleInputChange = (field, value) => {
         setForm(prev => ({ ...prev, [field]: value }))
-        
+
         if (field === 'nik' || field === 'nama') {
             if (value.length >= 2) {
                 const results = pendudukList.filter(p => {
@@ -50,7 +81,7 @@ export default function Bansos() {
                     const namaMatch = field === 'nama' && p.nama && p.nama.toLowerCase().includes(value.toLowerCase())
                     return nikMatch || namaMatch
                 }).slice(0, 5)
-                
+
                 setSuggestions(results)
                 setShowSuggestions(results.length > 0)
                 setActiveField(field)
@@ -70,7 +101,7 @@ export default function Bansos() {
             if (a.includes('4') || a.includes('empat') || a.includes(' iv ') || a.endsWith(' iv') || a === 'iv') cleanDusun = 'Dusun 4'
             if (a.includes('5') || a.includes('lima') || a.includes(' v ') || a.endsWith(' v') || a === 'v') cleanDusun = 'Dusun 5'
         }
-        
+
         setForm(prev => ({
             ...prev,
             nik: resident.nik,
@@ -159,10 +190,12 @@ export default function Bansos() {
         }
     }
 
-    const filteredData = bansosData.filter(item => 
-        item.nama_penerima.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const filteredData = bansosData.filter(item =>
+        item.nama_penerima.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.nama_program.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.lokasi_dusun.toLowerCase().includes(searchTerm.toLowerCase())
+        item.lokasi_dusun.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (item.nik_penerima || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.status.toLowerCase().includes(searchTerm.toLowerCase())
     )
 
     return (
@@ -217,7 +250,25 @@ export default function Bansos() {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredData.length === 0 ? (
+                        {loading ? (
+                            <tr>
+                                <td colSpan="6" className="text-center py-16 bg-[#141417]">
+                                    <div className="flex items-center justify-center gap-3">
+                                        <RiHandCoinLine size={32} className="text-[#3A3A3E] animate-pulse" />
+                                        <span className="text-[#6B6B70] text-sm">Memuat data bansos...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        ) : error ? (
+                            <tr>
+                                <td colSpan="6" className="text-center py-16 bg-[#141417]">
+                                    <div className="flex flex-col items-center justify-center gap-3">
+                                        <RiHandCoinLine size={32} className="text-[#3A3A3E]" />
+                                        <span className="text-red-400 text-sm">{error}</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        ) : filteredData.length === 0 ? (
                             <tr>
                                 <td colSpan="6" className="text-center py-16 bg-[#141417]">
                                     <div className="flex flex-col items-center justify-center gap-3">
@@ -228,8 +279,8 @@ export default function Bansos() {
                             </tr>
                         ) : (
                             filteredData.map((d, i) => (
-                                <tr 
-                                    key={d.id} 
+                                <tr
+                                    key={d.id}
                                     className={`hover:bg-[#1A1A1D] transition-colors ${i < filteredData.length - 1 ? 'border-b border-[#1F1F23]' : ''}`}
                                 >
                                     <td className="px-5 py-4 bg-[#141417]">
@@ -245,16 +296,16 @@ export default function Bansos() {
                                         </div>
                                     </td>
                                     <td className="px-5 py-4 bg-[#141417] text-[#ADADB0] text-[13px]" style={{ fontFamily: 'DM Mono, monospace' }}>
-                                        {d.tanggal_penyaluran ? new Date(d.tanggal_penyaluran).toLocaleDateString('id-ID') : '-'}
+                                        {d.tanggal_penyaluran ? new Date(d.tanggal_penyaluran).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
                                     </td>
                                     <td className="px-5 py-4 bg-[#141417] text-[#6B6B70] text-[13px] max-w-[200px] truncate" title={d.keterangan}>
                                         {d.keterangan || '-'}
                                     </td>
                                     <td className="px-5 py-4 bg-[#141417]">
                                         <span className={`inline-flex w-fit px-2 py-1 rounded text-[11px] font-medium 
-                                            ${d.status === 'Tersalurkan' ? 'bg-green-500/10 text-green-400' : 
-                                              d.status === 'Ditolak' ? 'bg-red-500/10 text-red-400' : 
-                                              'bg-orange-500/10 text-orange-400'}`}
+                                            ${d.status === 'Tersalurkan' ? 'bg-green-500/10 text-green-400' :
+                                                d.status === 'Ditolak' ? 'bg-red-500/10 text-red-400' :
+                                                    'bg-orange-500/10 text-orange-400'}`}
                                         >
                                             {d.status}
                                         </span>
@@ -264,7 +315,7 @@ export default function Bansos() {
                                             <button onClick={() => handleEdit(d)} className="p-1.5 rounded bg-[#1A1A1D] hover:bg-[#2A2A2E] text-[#8B8B90] hover:text-white transition-colors" title="Edit">
                                                 <RiEdit2Line size={15} />
                                             </button>
-                                            <button className="p-1.5 rounded bg-[#1A1A1D] hover:!bg-red-500/10 text-[#8B8B90] hover:text-red-400 transition-colors" title="Hapus">
+                                            <button onClick={() => handleDelete(d.id)} className="p-1.5 rounded bg-[#1A1A1D] hover:!bg-red-500/10 text-[#8B8B90] hover:text-red-400 transition-colors" title="Hapus">
                                                 <RiDeleteBinLine size={15} />
                                             </button>
                                         </div>
@@ -314,7 +365,7 @@ export default function Bansos() {
                                     </select>
                                 </div>
                             </div>
-                            
+
                             <div className="flex gap-4">
                                 <div className="flex-1 relative">
                                     <label className="block text-[11px] font-semibold text-[#6B6B70] uppercase tracking-wider mb-1.5 leading-none">NIK Penerima</label>
@@ -359,7 +410,7 @@ export default function Bansos() {
                                     )}
                                 </div>
                             </div>
-                            
+
                             <div className="flex gap-4">
                                 <div className="flex-1">
                                     <label className="block text-[11px] font-semibold text-[#6B6B70] uppercase tracking-wider mb-1.5 leading-none">Status</label>
@@ -382,7 +433,7 @@ export default function Bansos() {
                                     />
                                 </div>
                             </div>
-                            
+
                             <div>
                                 <label className="block text-[11px] font-semibold text-[#6B6B70] uppercase tracking-wider mb-1.5 leading-none">Keterangan (Opsional)</label>
                                 <textarea
@@ -391,13 +442,13 @@ export default function Bansos() {
                                     placeholder="Tambahkan catatan..."
                                 ></textarea>
                             </div>
-                            
+
                             <div className="flex gap-3 justify-end mt-2">
-                                <button type="button" onClick={resetFormAndClose} className="px-4 py-2 text-sm font-medium text-[#8B8B90] hover:text-white transition-colors">
+                                <button type="button" onClick={() => { resetForm(); setIsModalOpen(false) }} className="px-4 py-2 text-sm font-medium text-[#8B8B90] hover:text-white transition-colors">
                                     Batal
                                 </button>
-                                <button type="submit" className="px-6 py-2 bg-[#298064] hover:bg-[#216650] text-white text-sm font-medium rounded-lg transition-all">
-                                    Simpan
+                                <button type="submit" disabled={saving} className="px-6 py-2 bg-[#298064] hover:bg-[#216650] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-all">
+                                    {saving ? 'Menyimpan...' : 'Simpan'}
                                 </button>
                             </div>
                         </form>

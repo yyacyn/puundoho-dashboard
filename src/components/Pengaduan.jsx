@@ -1,110 +1,23 @@
-import { useState, useEffect } from 'react'
-import { RiSearchLine, RiDeleteBinLine, RiCustomerService2Line, RiCheckDoubleLine, RiTimeLine, RiImageLine, RiLoader4Line, RiArrowDownSLine } from 'react-icons/ri'
-import { apiFetch } from '../api'
-
-
+import { useState } from 'react'
+import { RiSearchLine, RiDeleteBinLine, RiCustomerService2Line, RiCheckDoubleLine, RiTimeLine, RiImageLine, RiLoader4Line } from 'react-icons/ri'
 
 export default function PengaduanList() {
     const [searchTerm, setSearchTerm] = useState('')
+
     const [selectedPengaduan, setSelectedPengaduan] = useState(null)
     const [imgLoading, setImgLoading] = useState(true)
-    const [statusDropdownOpen, setStatusDropdownOpen] = useState(false)
-    const [pendingStatus, setPendingStatus] = useState('')
-    const [rejectReason, setRejectReason] = useState('')
-    const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
-    const [pengaduanData, setPengaduanData] = useState([])
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState(null)
 
-    const statusFlow = {
-        'Baru': ['Ditinjau', 'Ditolak'],
-        'Ditinjau': ['Diproses', 'Ditolak'],
-        'Diproses': ['Selesai'],
-        'Selesai': [],
-        'Ditolak': []
-    }
-
-    // Fetch pengaduan data
-    useEffect(() => {
-        const fetchPengaduan = async () => {
-            try {
-                setLoading(true)
-                setError(null)
-                const res = await apiFetch('/pengaduan')
-                if (!res.ok) {
-                    throw new Error('Gagal mengambil data pengaduan')
-                }
-                const json = await res.json()
-                setPengaduanData(json.pengaduan || [])
-            } catch (err) {
-                console.error(err)
-                setError(err.message)
-                setPengaduanData([])
-            } finally {
-                setLoading(false)
-            }
-        }
-
-        fetchPengaduan()
-    }, [])
+    const [pengaduanData, setPengaduanData] = useState([
+        { id: 1, nama: 'Ahmad Wahyudi', kategori: 'Infrastruktur', isi: 'Jalan berlubang di dekat balai dusun 2 sangat berbahaya.', foto_url: 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&q=80', status: 'Baru', date: '2026-03-18' },
+        { id: 2, nama: 'Siti Rahayu', kategori: 'Layanan', isi: 'Air bersih mati sejak pagi di RT 03', foto_url: null, status: 'Proses', date: '2026-03-17' },
+        { id: 3, nama: 'Budi Santoso', kategori: 'Lingkungan', isi: 'Sampah menumpuk di area lapangan terbuka', foto_url: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&q=80', status: 'Selesai', date: '2026-03-15' },
+    ])
 
     const filteredData = pengaduanData.filter(item =>
         item.nama.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.kategori.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.isi.toLowerCase().includes(searchTerm.toLowerCase())
     )
-
-    const handleStatusChange = async (newStatus) => {
-        const finalStatus = newStatus || pendingStatus
-        if (!selectedPengaduan || !finalStatus) return
-
-        if (finalStatus === 'Ditolak' && !rejectReason.trim()) {
-            alert('Keterangan alasan penolakan harus diisi!')
-            return
-        }
-
-        setIsUpdatingStatus(true)
-        try {
-            const response = await apiFetch(`/pengaduan/${selectedPengaduan.id}/status`, {
-                method: 'PATCH',
-                body: JSON.stringify({ status: finalStatus, keterangan: rejectReason })
-            })
-
-            if (!response.ok) {
-                const err = await response.json()
-                throw new Error(err.error || 'Gagal mengubah status')
-            }
-
-            const updatedPengaduan = await response.json()
-
-            const updatedData = pengaduanData.map(item =>
-                item.id === selectedPengaduan.id
-                    ? updatedPengaduan
-                    : item
-            )
-            setPengaduanData(updatedData)
-            setSelectedPengaduan(updatedPengaduan)
-            setPendingStatus('')
-            setRejectReason('')
-            setStatusDropdownOpen(false)
-        } catch (error) {
-            console.error('Error updating status:', error)
-            alert('Gagal mengubah status: ' + error.message)
-        } finally {
-            setIsUpdatingStatus(false)
-        }
-    }
-
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'Baru': return 'bg-blue-500/10 text-blue-400'
-            case 'Ditinjau': return 'bg-purple-500/10 text-purple-400'
-            case 'Diproses': return 'bg-orange-500/10 text-orange-400'
-            case 'Selesai': return 'bg-green-500/10 text-green-400'
-            case 'Ditolak': return 'bg-red-500/10 text-red-400'
-            default: return 'bg-gray-500/10 text-gray-400'
-        }
-    }
 
     return (
         <div className="flex flex-col gap-7 px-10 py-8">
@@ -137,20 +50,6 @@ export default function PengaduanList() {
                 </div>
             </div>
 
-            {/* Error Message */}
-            {error && (
-                <div className="bg-red-500/10 border border-red-500 text-red-400 px-4 py-3 rounded-lg">
-                    {error}
-                </div>
-            )}
-
-            {/* Loading Message */}
-            {loading && (
-                <div className="bg-blue-500/10 border border-blue-500 text-blue-400 px-4 py-3 rounded-lg">
-                    Memuat data pengaduan...
-                </div>
-            )}
-
             {/* Main Table Container */}
             <div className="rounded-xl overflow-hidden border border-[#1F1F23]">
                 <table className="w-full border-collapse">
@@ -158,7 +57,7 @@ export default function PengaduanList() {
                         <tr className="bg-[#141417] border-b border-[#1F1F23]">
                             <th className="text-left px-5 py-3.5 text-[#6B6B70] text-[11px] font-semibold tracking-wide uppercase">Pelapor</th>
                             <th className="text-left px-5 py-3.5 text-[#6B6B70] text-[11px] font-semibold tracking-wide uppercase">Kategori</th>
-                            <th className="text-left px-5 py-3.5 text-[#6B6B70] text-[11px] font-semibold tracking-wide uppercase w-[35%]">Judul Laporan</th>
+                            <th className="text-left px-5 py-3.5 text-[#6B6B70] text-[11px] font-semibold tracking-wide uppercase w-[35%]">Isi Pengaduan</th>
                             <th className="text-left px-5 py-3.5 text-[#6B6B70] text-[11px] font-semibold tracking-wide uppercase">Tanggal</th>
                             <th className="text-left px-5 py-3.5 text-[#6B6B70] text-[11px] font-semibold tracking-wide uppercase">Status</th>
                             <th className="text-right px-5 py-3.5 text-[#6B6B70] text-[11px] font-semibold tracking-wide uppercase">Aksi</th>
@@ -190,29 +89,34 @@ export default function PengaduanList() {
                                         </div>
                                     </td>
                                     <td className="px-5 py-4 bg-[#141417] text-[#ADADB0] text-[13px]">{d.kategori}</td>
-                                    <td className="px-5 py-4 bg-[#141417] text-[#ADADB0] text-[13px] max-w-xs" title={d.judul}>
-                                        <span className="truncate">{d.judul}</span>
+                                    <td className="px-5 py-4 bg-[#141417] text-[#ADADB0] text-[13px] max-w-xs" title={d.isi}>
+                                        <div className="flex items-center gap-2">
+                                            <span className="truncate">{d.isi}</span>
+                                            {d.foto_url && <RiImageLine size={14} className="text-[#6B6B70] shrink-0" title="Ada Lampiran Foto" />}
+                                        </div>
                                     </td>
-                                    <td className="px-5 py-4 bg-[#141417] text-[#8B8B90] text-[13px] whitespace-nowrap">{new Date(d.tanggal || d.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+                                    <td className="px-5 py-4 bg-[#141417] text-[#8B8B90] text-[13px] whitespace-nowrap">{new Date(d.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
                                     <td className="px-5 py-4 bg-[#141417]">
                                         <span className={`inline-flex px-2 py-1 rounded text-[11px] font-medium 
-                                            ${getStatusColor(d.status)}`}
+                                            ${d.status === 'Baru' ? 'bg-blue-500/10 text-blue-400' :
+                                                d.status === 'Proses' ? 'bg-orange-500/10 text-orange-400' :
+                                                    'bg-green-500/10 text-green-400'}`}
                                         >
                                             {d.status}
                                         </span>
                                     </td>
                                     <td className="px-5 py-4 bg-[#141417] text-right">
-                                        <div className="flex items-center justify-end gap-2 relative" onClick={(e) => e.stopPropagation()}>
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedPengaduan(d)
-                                                    setStatusDropdownOpen(true)
-                                                    setRejectReason(d.keterangan || '')
-                                                }}
-                                                className="px-3 py-1.5 rounded bg-[#1A1A1D] hover:bg-[#2A2A2E] text-[#ADADB0] hover:text-white text-[12px] font-medium transition-colors flex items-center gap-1"
-                                            >
-                                                Ubah Status <RiArrowDownSLine size={12} />
-                                            </button>
+                                        <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                                            {d.status !== 'Selesai' && (
+                                                <button className="p-1.5 rounded bg-[#1A1A1D] hover:bg-green-500/10 text-[#8B8B90] hover:text-green-400 transition-colors" title="Tandai Selesai">
+                                                    <RiCheckDoubleLine size={15} />
+                                                </button>
+                                            )}
+                                            {d.status === 'Baru' && (
+                                                <button className="p-1.5 rounded bg-[#1A1A1D] hover:bg-orange-500/10 text-[#8B8B90] hover:text-orange-400 transition-colors" title="Proses Laporan">
+                                                    <RiTimeLine size={15} />
+                                                </button>
+                                            )}
                                             <button className="p-1.5 rounded bg-[#1A1A1D] hover:!bg-red-500/10 text-[#8B8B90] hover:text-red-400 transition-colors" title="Hapus">
                                                 <RiDeleteBinLine size={15} />
                                             </button>
@@ -246,7 +150,7 @@ export default function PengaduanList() {
                                 </div>
                                 <div>
                                     <span className="block text-[11px] font-semibold text-[#6B6B70] uppercase mb-1">Tanggal</span>
-                                    <span className="text-white font-medium">{new Date(selectedPengaduan.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                                    <span className="text-white font-medium">{new Date(selectedPengaduan.date).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                                 </div>
                                 <div>
                                     <span className="block text-[11px] font-semibold text-[#6B6B70] uppercase mb-1">Kategori</span>
@@ -257,68 +161,13 @@ export default function PengaduanList() {
                                     <span className={`inline-flex px-2 py-1 rounded text-[11px] font-medium 
                                             ${selectedPengaduan.status === 'Baru' ? 'bg-blue-500/10 text-blue-400' :
                                             selectedPengaduan.status === 'Proses' ? 'bg-orange-500/10 text-orange-400' :
-                                                selectedPengaduan.status === 'Ditolak' ? 'bg-red-500/10 text-red-400' :
-                                                    'bg-green-500/10 text-green-400'}`}
+                                                'bg-green-500/10 text-green-400'}`}
                                     >
                                         {selectedPengaduan.status}
                                     </span>
                                 </div>
                             </div>
 
-                            <div>
-                                <span className="block text-[11px] font-semibold text-[#6B6B70] uppercase mb-2">Ubah Status</span>
-                                <div className="relative">
-                                    <button
-                                        onClick={() => setStatusDropdownOpen(!statusDropdownOpen)}
-                                        className="w-full px-3 py-2 rounded-lg bg-[#0A0A0B] border border-[#1F1F23] text-white text-[13px] font-medium flex items-center justify-between hover:border-[#2A2A2E] transition-colors"
-                                    >
-                                        {selectedPengaduan.status}
-                                        <RiArrowDownSLine size={16} />
-                                    </button>
-
-                                    {statusDropdownOpen && (
-                                        <div className="absolute z-10 top-full left-0 right-0 mt-1 rounded-lg bg-[#1A1A1D] border border-[#2A2A2E] shadow-lg">
-                                            {statusFlow[selectedPengaduan.status]?.map((nextStatus) => (
-                                                <button
-                                                    key={nextStatus}
-                                                    onClick={() => {
-                                                        setPendingStatus(nextStatus)
-                                                        setStatusDropdownOpen(false)
-                                                        if (nextStatus !== 'Ditolak') {
-                                                            setRejectReason('')
-                                                        }
-                                                    }}
-                                                    className="w-full px-3 py-2 text-left text-[13px] text-[#ADADB0] hover:bg-[#2A2A2E] hover:text-white transition-colors first:rounded-t-lg last:rounded-b-lg"
-                                                >
-                                                    {nextStatus}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {selectedPengaduan.status === 'Ditolak' && selectedPengaduan.keterangan && (
-                                <div>
-                                    <span className="block text-[11px] font-semibold text-[#6B6B70] uppercase mb-2">Alasan Penolakan</span>
-                                    <div className="p-4 rounded-lg bg-[#0A0A0B] border border-[#1F1F23] text-[#ADADB0] leading-relaxed">
-                                        {selectedPengaduan.keterangan}
-                                    </div>
-                                </div>
-                            )}
-
-                            {pendingStatus === 'Ditolak' && (
-                                <div>
-                                    <span className="block text-[11px] font-semibold text-[#6B6B70] uppercase mb-2">Alasan Penolakan (jika dipilih)</span>
-                                    <textarea
-                                        value={rejectReason}
-                                        onChange={(e) => setRejectReason(e.target.value)}
-                                        placeholder="Masukkan alasan penolakan..."
-                                        className="w-full px-3 py-2 rounded-lg bg-[#0A0A0B] border border-[#1F1F23] text-white text-[13px] placeholder-[#6B6B70] focus:outline-none focus:border-[#2A2A2E] resize-none"
-                                        rows="3"
-                                    />
-                                </div>
-                            )}
 
                             <div>
                                 <span className="block text-[11px] font-semibold text-[#6B6B70] uppercase mb-2">Isi Laporan</span>
@@ -352,13 +201,6 @@ export default function PengaduanList() {
                                 className="px-4 py-2 text-sm font-medium text-white bg-[#1A1A1D] hover:bg-[#2A2A2E] border border-[#2A2A2E] rounded-lg transition-colors"
                             >
                                 Tutup
-                            </button>
-                            <button
-                                onClick={() => handleStatusChange()}
-                                disabled={!pendingStatus || isUpdatingStatus || (pendingStatus === 'Ditolak' && !rejectReason.trim())}
-                                className="px-4 py-2 text-sm font-medium text-white bg-[#298064] hover:bg-[#236d55] disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
-                            >
-                                {isUpdatingStatus ? 'Menyimpan...' : 'Simpan'}
                             </button>
                         </div>
                     </div>

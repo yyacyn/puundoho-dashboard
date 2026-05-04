@@ -3,16 +3,7 @@ import { RiAddLine, RiSearchLine, RiHeartPulseLine, RiEdit2Line, RiDeleteBinLine
 import { apiFetch } from '../api'
 
 const DUSUN_OPTIONS = ['Dusun 1', 'Dusun 2', 'Dusun 3', 'Dusun 4', 'Dusun 5']
-const STATUS_OPTIONS = ['Stunting', 'Beresiko', 'Normal', 'Gizi Buruk']
-const MAX_LENGTHS = {
-    nik_anak: 16,
-    nama_anak: 255,
-    lokasi_dusun: 100,
-    status: 50,
-}
-
-const MAX_DECIMAL_VALUE = 999.99
-const DECIMAL_PATTERN = /^\d{1,3}(\.\d{1,2})?$/
+const STATUS_OPTIONS = ['Stunting', 'Beresiko', 'Normal']
 
 const initialForm = {
     nik_anak: '',
@@ -38,7 +29,6 @@ export default function StuntingList() {
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
-    const [formErrors, setFormErrors] = useState({})
     const [stuntingData, setStuntingData] = useState([])
     const [editingId, setEditingId] = useState(null)
     const [form, setForm] = useState(initialForm)
@@ -81,16 +71,12 @@ export default function StuntingList() {
     const resetFormAndClose = () => {
         setForm(initialForm)
         setEditingId(null)
-        setFormErrors({})
-        setError('')
         setIsModalOpen(false)
     }
 
     const handleOpenCreate = () => {
         setForm(initialForm)
         setEditingId(null)
-        setFormErrors({})
-        setError('')
         setIsModalOpen(true)
     }
 
@@ -106,82 +92,13 @@ export default function StuntingList() {
             status: item.status || 'Normal',
             tanggal_pemeriksaan: item.tanggal_pemeriksaan || '',
         })
-        setFormErrors({})
-        setError('')
         setIsModalOpen(true)
-    }
-
-    const validateForm = () => {
-        const nextErrors = {}
-
-        const nikAnak = form.nik_anak.trim()
-        const namaAnak = form.nama_anak.trim()
-        const lokasiDusun = form.lokasi_dusun.trim()
-        const status = form.status.trim()
-        const tinggiBadan = form.tinggi_badan === '' ? '' : String(form.tinggi_badan).trim()
-        const beratBadan = form.berat_badan === '' ? '' : String(form.berat_badan).trim()
-
-        if (nikAnak.length !== MAX_LENGTHS.nik_anak) {
-            nextErrors.nik_anak = `NIK Anak harus tepat ${MAX_LENGTHS.nik_anak} karakter.`
-        }
-
-        if (!namaAnak) {
-            nextErrors.nama_anak = `Nama Balita wajib diisi (1-${MAX_LENGTHS.nama_anak} karakter).`
-        } else if (namaAnak.length > MAX_LENGTHS.nama_anak) {
-            nextErrors.nama_anak = `Nama Balita maksimal ${MAX_LENGTHS.nama_anak} karakter.`
-        }
-
-        if (!lokasiDusun) {
-            nextErrors.lokasi_dusun = `Dusun Wilayah wajib dipilih (maksimal ${MAX_LENGTHS.lokasi_dusun} karakter).`
-        } else if (lokasiDusun.length > MAX_LENGTHS.lokasi_dusun) {
-            nextErrors.lokasi_dusun = `Dusun Wilayah maksimal ${MAX_LENGTHS.lokasi_dusun} karakter.`
-        }
-
-        if (!STATUS_OPTIONS.includes(status)) {
-            nextErrors.status = `Status harus dipilih dari opsi yang tersedia.`
-        } else if (status.length > MAX_LENGTHS.status) {
-            nextErrors.status = `Status maksimal ${MAX_LENGTHS.status} karakter.`
-        }
-
-        const validateDecimalField = (value, fieldLabel, fieldKey) => {
-            if (value === '') return
-
-            if (!DECIMAL_PATTERN.test(value)) {
-                nextErrors[fieldKey] = `${fieldLabel} harus berupa angka desimal maksimal 2 angka di belakang koma.`
-                return
-            }
-
-            const numericValue = Number(value)
-            if (Number.isNaN(numericValue)) {
-                nextErrors[fieldKey] = `${fieldLabel} harus berupa angka yang valid.`
-                return
-            }
-
-            if (numericValue < 0.01 || numericValue > MAX_DECIMAL_VALUE) {
-                nextErrors[fieldKey] = `${fieldLabel} harus berada di rentang 0.01 - ${MAX_DECIMAL_VALUE}.`
-            }
-        }
-
-        validateDecimalField(tinggiBadan, 'Tinggi Badan', 'tinggi_badan')
-        validateDecimalField(beratBadan, 'Berat Badan', 'berat_badan')
-
-        return nextErrors
     }
 
     const handleFormSubmit = async (e) => {
         e.preventDefault()
-        setError('')
-
-        const nextErrors = validateForm()
-        if (Object.keys(nextErrors).length > 0) {
-            setFormErrors(nextErrors)
-            setError(nextErrors[Object.keys(nextErrors)[0]])
-            return
-        }
-
-        setFormErrors({})
-        setError('')
         setSaving(true)
+        setError('')
 
         try {
             const payload = {
@@ -257,7 +174,7 @@ export default function StuntingList() {
             </div>
 
             {error && (
-                <div className="px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs text-center">
+                <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
                     {error}
                 </div>
             )}
@@ -370,26 +287,14 @@ export default function StuntingList() {
                                 &times;
                             </button>
                         </div>
-                        <form className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={handleFormSubmit} noValidate>
-                            {error && (
-                                <div className="md:col-span-2 px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs text-center">
-                                    {error}
-                                </div>
-                            )}
+                        <form className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={handleFormSubmit}>
                             <div>
-                                <label className="block text-[11px] font-semibold text-[#6B6B70] uppercase tracking-wider mb-1.5 leading-none">NIK Anak</label>
+                                <label className="block text-[11px] font-semibold text-[#6B6B70] uppercase tracking-wider mb-1.5 leading-none">NIK Anak (Opsional)</label>
                                 <input
                                     type="text"
-                                    inputMode="numeric"
-                                    required
-                                    maxLength={MAX_LENGTHS.nik_anak}
                                     value={form.nik_anak}
-                                    onChange={(e) => {
-                                        setForm((prev) => ({ ...prev, nik_anak: e.target.value }))
-                                        if (formErrors.nik_anak) setFormErrors((prev) => ({ ...prev, nik_anak: '' }))
-                                        if (error) setError('')
-                                    }}
-                                    className={`w-full px-4 py-2.5 bg-[#0A0A0B] border rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors ${formErrors.nik_anak ? 'border-red-500' : 'border-[#2A2A2E]'}`}
+                                    onChange={(e) => setForm((prev) => ({ ...prev, nik_anak: e.target.value }))}
+                                    className="w-full px-4 py-2.5 bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors"
                                     placeholder="Contoh: 7408..."
                                 />
                             </div>
@@ -398,14 +303,10 @@ export default function StuntingList() {
                                 <label className="block text-[11px] font-semibold text-[#6B6B70] uppercase tracking-wider mb-1.5 leading-none">Nama Balita</label>
                                 <input
                                     type="text"
-                                    maxLength={MAX_LENGTHS.nama_anak}
+                                    required
                                     value={form.nama_anak}
-                                    onChange={(e) => {
-                                        setForm((prev) => ({ ...prev, nama_anak: e.target.value }))
-                                        if (formErrors.nama_anak) setFormErrors((prev) => ({ ...prev, nama_anak: '' }))
-                                        if (error) setError('')
-                                    }}
-                                    className={`w-full px-4 py-2.5 bg-[#0A0A0B] border rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors ${formErrors.nama_anak ? 'border-red-500' : 'border-[#2A2A2E]'}`}
+                                    onChange={(e) => setForm((prev) => ({ ...prev, nama_anak: e.target.value }))}
+                                    className="w-full px-4 py-2.5 bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors"
                                     placeholder="Masukkan nama..."
                                 />
                             </div>
@@ -414,12 +315,8 @@ export default function StuntingList() {
                                 <label className="block text-[11px] font-semibold text-[#6B6B70] uppercase tracking-wider mb-1.5 leading-none">Dusun Wilayah</label>
                                 <select
                                     value={form.lokasi_dusun}
-                                    onChange={(e) => {
-                                        setForm((prev) => ({ ...prev, lokasi_dusun: e.target.value }))
-                                        if (formErrors.lokasi_dusun) setFormErrors((prev) => ({ ...prev, lokasi_dusun: '' }))
-                                        if (error) setError('')
-                                    }}
-                                    className={`w-full px-4 py-2.5 bg-[#0A0A0B] border rounded-lg text-sm text-[#ADADB0] focus:outline-none focus:border-[#298064] transition-colors ${formErrors.lokasi_dusun ? 'border-red-500' : 'border-[#2A2A2E]'}`}
+                                    onChange={(e) => setForm((prev) => ({ ...prev, lokasi_dusun: e.target.value }))}
+                                    className="w-full px-4 py-2.5 bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg text-sm text-[#ADADB0] focus:outline-none focus:border-[#298064] transition-colors"
                                 >
                                     {DUSUN_OPTIONS.map((dusun) => (
                                         <option key={dusun} value={dusun}>{dusun}</option>
@@ -431,12 +328,8 @@ export default function StuntingList() {
                                 <label className="block text-[11px] font-semibold text-[#6B6B70] uppercase tracking-wider mb-1.5 leading-none">Status</label>
                                 <select
                                     value={form.status}
-                                    onChange={(e) => {
-                                        setForm((prev) => ({ ...prev, status: e.target.value }))
-                                        if (formErrors.status) setFormErrors((prev) => ({ ...prev, status: '' }))
-                                        if (error) setError('')
-                                    }}
-                                    className={`w-full px-4 py-2.5 bg-[#0A0A0B] border rounded-lg text-sm text-[#ADADB0] focus:outline-none focus:border-[#298064] transition-colors ${formErrors.status ? 'border-red-500' : 'border-[#2A2A2E]'}`}
+                                    onChange={(e) => setForm((prev) => ({ ...prev, status: e.target.value }))}
+                                    className="w-full px-4 py-2.5 bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg text-sm text-[#ADADB0] focus:outline-none focus:border-[#298064] transition-colors"
                                 >
                                     {STATUS_OPTIONS.map((status) => (
                                         <option key={status} value={status}>{status}</option>
@@ -449,10 +342,7 @@ export default function StuntingList() {
                                 <input
                                     type="date"
                                     value={form.tanggal_lahir}
-                                    onChange={(e) => {
-                                        setForm((prev) => ({ ...prev, tanggal_lahir: e.target.value }))
-                                        if (error) setError('')
-                                    }}
+                                    onChange={(e) => setForm((prev) => ({ ...prev, tanggal_lahir: e.target.value }))}
                                     className="w-full px-4 py-2.5 bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors"
                                 />
                             </div>
@@ -462,10 +352,7 @@ export default function StuntingList() {
                                 <input
                                     type="date"
                                     value={form.tanggal_pemeriksaan}
-                                    onChange={(e) => {
-                                        setForm((prev) => ({ ...prev, tanggal_pemeriksaan: e.target.value }))
-                                        if (error) setError('')
-                                    }}
+                                    onChange={(e) => setForm((prev) => ({ ...prev, tanggal_pemeriksaan: e.target.value }))}
                                     className="w-full px-4 py-2.5 bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors"
                                 />
                             </div>
@@ -473,15 +360,11 @@ export default function StuntingList() {
                             <div>
                                 <label className="block text-[11px] font-semibold text-[#6B6B70] uppercase tracking-wider mb-1.5 leading-none">Berat Badan (Kg, Opsional)</label>
                                 <input
-                                    type="text"
-                                    inputMode="decimal"
+                                    type="number"
+                                    step="0.1"
                                     value={form.berat_badan}
-                                    onChange={(e) => {
-                                        setForm((prev) => ({ ...prev, berat_badan: e.target.value }))
-                                        if (formErrors.berat_badan) setFormErrors((prev) => ({ ...prev, berat_badan: '' }))
-                                        if (error) setError('')
-                                    }}
-                                    className={`w-full px-4 py-2.5 bg-[#0A0A0B] border rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors ${formErrors.berat_badan ? 'border-red-500' : 'border-[#2A2A2E]'}`}
+                                    onChange={(e) => setForm((prev) => ({ ...prev, berat_badan: e.target.value }))}
+                                    className="w-full px-4 py-2.5 bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors"
                                     placeholder="Mis. 8.5"
                                 />
                             </div>
@@ -489,15 +372,11 @@ export default function StuntingList() {
                             <div>
                                 <label className="block text-[11px] font-semibold text-[#6B6B70] uppercase tracking-wider mb-1.5 leading-none">Tinggi Badan (Cm, Opsional)</label>
                                 <input
-                                    type="text"
-                                    inputMode="decimal"
+                                    type="number"
+                                    step="0.1"
                                     value={form.tinggi_badan}
-                                    onChange={(e) => {
-                                        setForm((prev) => ({ ...prev, tinggi_badan: e.target.value }))
-                                        if (formErrors.tinggi_badan) setFormErrors((prev) => ({ ...prev, tinggi_badan: '' }))
-                                        if (error) setError('')
-                                    }}
-                                    className={`w-full px-4 py-2.5 bg-[#0A0A0B] border rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors ${formErrors.tinggi_badan ? 'border-red-500' : 'border-[#2A2A2E]'}`}
+                                    onChange={(e) => setForm((prev) => ({ ...prev, tinggi_badan: e.target.value }))}
+                                    className="w-full px-4 py-2.5 bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors"
                                     placeholder="Mis. 75.0"
                                 />
                             </div>
