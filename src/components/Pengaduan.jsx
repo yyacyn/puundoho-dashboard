@@ -193,7 +193,7 @@ export default function PengaduanList() {
                                     <td className="px-5 py-4 bg-[#141417] text-[#ADADB0] text-[13px] max-w-xs" title={d.judul}>
                                         <span className="truncate">{d.judul}</span>
                                     </td>
-                                    <td className="px-5 py-4 bg-[#141417] text-[#8B8B90] text-[13px] whitespace-nowrap">{new Date(d.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+                                    <td className="px-5 py-4 bg-[#141417] text-[#6B6B70] text-[13px]">{new Date(d.date).toLocaleDateString('id-ID')}</td>
                                     <td className="px-5 py-4 bg-[#141417]">
                                         <span className={`inline-flex px-2 py-1 rounded text-[11px] font-medium 
                                             ${getStatusColor(d.status)}`}

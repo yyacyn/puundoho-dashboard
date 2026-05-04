@@ -212,7 +212,7 @@ export default function Bansos() {
                                         </div>
                                     </td>
                                     <td className="px-5 py-4 bg-[#141417] text-[#ADADB0] text-[13px]" style={{ fontFamily: 'DM Mono, monospace' }}>
-                                        {d.tanggal_penyaluran ? new Date(d.tanggal_penyaluran).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'}
+                                        {d.tanggal_penyaluran ? new Date(d.tanggal_penyaluran).toLocaleDateString('id-ID') : '-'}
                                     </td>
                                     <td className="px-5 py-4 bg-[#141417] text-[#6B6B70] text-[13px] max-w-[200px] truncate" title={d.keterangan}>
                                         {d.keterangan || '-'}
