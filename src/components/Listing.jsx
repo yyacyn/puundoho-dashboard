@@ -25,13 +25,13 @@ import iconUrl from 'leaflet/dist/images/marker-icon.png'
 import shadowUrl from 'leaflet/dist/images/marker-shadow.png'
 
 const customIcon = new L.Icon({
-  iconUrl,
-  iconRetinaUrl,
-  shadowUrl,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
+    iconUrl,
+    iconRetinaUrl,
+    shadowUrl,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
 })
 
 L.Marker.prototype.options.icon = customIcon
@@ -365,14 +365,14 @@ function LocationPickerMap({ coordinateString, onLocationSelected }) {
 
     const parts = coordinateString.split(',').map(s => parseFloat(s.trim()))
     const hasValidCoords = parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])
-    
+
     // Default to village center if no valid coords yet
     const center = hasValidCoords ? parts : [-3.1, 121.08]
-    
+
     const map = useMap()
     useEffect(() => {
         if (hasValidCoords) {
-             map.setView(center, map.getZoom())
+            map.setView(center, map.getZoom())
         }
     }, [coordinateString]) // eslint-disable-line
 
@@ -395,14 +395,37 @@ function ListingFormModal({ initialData, onClose, onSave }) {
         koordinat: initialData?.koordinat || '',
         image_url: initialData?.image_url || '',
     })
+    const [error, setError] = useState('')
+    const [formErrors, setFormErrors] = useState({})
+
+    const MAX_LENGTHS = { nama: 255, koordinat: 255, image_url: 500 }
 
     const handleSubmit = async (e) => {
         e.preventDefault()
+        setError('')
+        setFormErrors({})
+
+        const errs = {}
+        if (!formData.nama || formData.nama.trim() === '') errs.nama = 'Nama fasilitas wajib diisi.'
+        else if (formData.nama.length > MAX_LENGTHS.nama) errs.nama = `Nama maksimal ${MAX_LENGTHS.nama} karakter.`
+
+        if (!formData.koordinat || formData.koordinat.trim() === '') errs.koordinat = 'Koordinat wajib diisi.'
+        else if (formData.koordinat.length > MAX_LENGTHS.koordinat) errs.koordinat = `Koordinat maksimal ${MAX_LENGTHS.koordinat} karakter.`
+
+        if (formData.image_url && formData.image_url.length > MAX_LENGTHS.image_url) errs.image_url = 'URL gambar terlalu panjang.'
+
+        if (Object.keys(errs).length > 0) {
+            setFormErrors(errs)
+            setError('Perbaiki kesalahan pada form sebelum menyimpan.')
+            return
+        }
+
         setSaving(true)
         try {
             await onSave(formData)
         } catch (err) {
-            alert('Gagal menyimpan: ' + err.message)
+            setError('Gagal menyimpan: ' + (err.message || 'terjadi kesalahan'))
+            console.error(err)
         } finally {
             setSaving(false)
         }
@@ -427,11 +450,16 @@ function ListingFormModal({ initialData, onClose, onSave }) {
                 </div>
 
                 {/* Two-column form */}
-                <form onSubmit={handleSubmit} className="flex flex-1 overflow-hidden">
-                    
+                <form onSubmit={handleSubmit} noValidate className="flex flex-1 overflow-hidden">
+
                     {/* ── LEFT PANEL (35%) — Inputs ── */}
                     <div className="w-[35%] shrink-0 flex flex-col gap-6 px-6 py-5 overflow-y-auto border-r border-[#2A2A2E]">
-                        
+                        {error && (
+                            <div className="bg-red-500/10 border border-red-500/30 text-red-300 p-3 rounded-md">
+                                <div className="text-sm font-medium">{error}</div>
+                            </div>
+                        )}
+
                         {/* Image Uploader */}
                         <div className="flex flex-col gap-2">
                             <label className="text-[#8B8B90] text-xs font-semibold uppercase tracking-wider">Foto Fasilitas</label>
@@ -439,6 +467,7 @@ function ListingFormModal({ initialData, onClose, onSave }) {
                                 value={formData.image_url}
                                 onChange={url => setFormData(prev => ({ ...prev, image_url: url }))}
                             />
+                            {formErrors.image_url && <p className="text-red-500 text-xs mt-1">{formErrors.image_url}</p>}
                         </div>
 
                         {/* Nama */}
@@ -446,12 +475,13 @@ function ListingFormModal({ initialData, onClose, onSave }) {
                             <label className="text-[#8B8B90] text-xs font-semibold uppercase tracking-wider">Nama Fasilitas</label>
                             <input
                                 type="text"
-                                required
+                                // validation handled in JS
                                 placeholder="Contoh: Puskesmas Puundoho"
                                 value={formData.nama}
                                 onChange={e => setFormData(f => ({ ...f, nama: e.target.value }))}
                                 className="w-full px-4 py-3 rounded-lg bg-[#1A1A1D] border border-[#2A2A2E] text-white text-sm placeholder:text-[#4A4A4E] focus:border-[#298064] outline-none transition-colors"
                             />
+                            {formErrors.nama && <p className="text-red-500 text-xs mt-1">{formErrors.nama}</p>}
                         </div>
 
                         {/* Koordinat */}
@@ -459,12 +489,13 @@ function ListingFormModal({ initialData, onClose, onSave }) {
                             <label className="text-[#8B8B90] text-xs font-semibold uppercase tracking-wider">Koordinat</label>
                             <input
                                 type="text"
-                                required
+                                // validation handled in JS
                                 placeholder="-4.12345, 122.56789"
                                 value={formData.koordinat}
                                 onChange={e => setFormData(f => ({ ...f, koordinat: e.target.value }))}
                                 className="w-full px-4 py-3 rounded-lg bg-[#1A1A1D] border border-[#2A2A2E] text-white text-sm font-mono placeholder:text-[#4A4A4E] focus:border-[#298064] outline-none transition-colors"
                             />
+                            {formErrors.koordinat && <p className="text-red-500 text-xs mt-1">{formErrors.koordinat}</p>}
                             <p className="text-xs text-[#6B6B70] mt-1 leading-relaxed">
                                 Anda dapat mengetik manual, atau <strong className="text-white">klik pada peta di sebelah kanan</strong> untuk menandai lokasi fasilitas.
                             </p>
@@ -499,15 +530,15 @@ function ListingFormModal({ initialData, onClose, onSave }) {
                     <div className="flex-1 flex flex-col px-6 py-5 overflow-hidden">
                         <label className="text-[#8B8B90] text-xs font-medium uppercase tracking-wide mb-1.5 shrink-0">Pilih Lokasi di Peta</label>
                         <div className="flex-1 rounded-xl overflow-hidden border border-[#2A2A2E] z-0 map-dark-mode">
-                            <MapContainer 
-                                center={mapCenter} 
-                                zoom={14} 
-                                scrollWheelZoom={true} 
+                            <MapContainer
+                                center={mapCenter}
+                                zoom={14}
+                                scrollWheelZoom={true}
                                 style={{ height: '100%', width: '100%' }}
                             >
-                                <LocationPickerMap 
-                                    coordinateString={formData.koordinat} 
-                                    onLocationSelected={coords => setFormData(f => ({ ...f, koordinat: coords }))} 
+                                <LocationPickerMap
+                                    coordinateString={formData.koordinat}
+                                    onLocationSelected={coords => setFormData(f => ({ ...f, koordinat: coords }))}
                                 />
                             </MapContainer>
                         </div>

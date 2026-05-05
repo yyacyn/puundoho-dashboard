@@ -133,9 +133,9 @@ export default function PendudukEditor() {
         { accessorKey: 'jenis_kelamin', header: 'JK', cell: EditableCell },
         { accessorKey: 'status_kawin', header: 'Status', cell: EditableCell },
         { accessorKey: 'tempat_lahir', header: 'Tempat Lahir', cell: EditableCell },
-        { 
-            accessorKey: 'tanggal_lahir', 
-            header: 'Tgl Lahir', 
+        {
+            accessorKey: 'tanggal_lahir',
+            header: 'Tgl Lahir',
             cell: ({ getValue, row, column, table }) => {
                 const val = getValue()
                 // Format ISO string to YYYY-MM-DD
@@ -164,7 +164,7 @@ export default function PendudukEditor() {
     const table = useReactTable({
         data,
         columns,
-        state: { 
+        state: {
             globalFilter,
             pagination
         },
@@ -354,11 +354,11 @@ export default function PendudukEditor() {
                 ...rest,
                 tanggal_lahir: rest.tanggal_lahir ? rest.tanggal_lahir.split('T')[0] : ''
             }))
-            
+
             const ws = XLSX.utils.json_to_sheet(exportData)
             const wb = XLSX.utils.book_new()
             XLSX.utils.book_append_sheet(wb, ws, "Data Penduduk")
-            
+
             XLSX.writeFile(wb, `Data_Penduduk_${dataset?.tahun || 'Export'}.xlsx`)
             showToast('Berhasil mengekspor data ke Excel', 'success')
         } catch (error) {
@@ -373,7 +373,7 @@ export default function PendudukEditor() {
             {/* Toolbar */}
             <div className="p-3.5 border-b border-[#2A2A2E] bg-[#141417] flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-4">
-                    <button 
+                    <button
                         onClick={() => navigate('/dashboard/penduduk')}
                         className="p-2 rounded-lg bg-[#1A1A1D] text-[#8B8B90] hover:text-white transition-colors border border-[#2A2A2E]"
                     >
@@ -395,7 +395,7 @@ export default function PendudukEditor() {
                             className="w-full pl-9 pr-4 py-2 bg-[#0A0A0B] border border-[#2A2A2E] rounded-xl text-xs text-white focus:outline-none focus:border-[#298064] transition-all"
                         />
                     </div>
-                    
+
                     <button
                         onClick={() => setIsAddModalOpen(true)}
                         className="flex items-center gap-2 px-4 py-2 bg-[#1A1A1D] hover:bg-[#2A2A2E] text-white text-xs font-semibold rounded-xl border border-[#2A2A2E] transition-all"
@@ -419,7 +419,7 @@ export default function PendudukEditor() {
                         <input type="file" hidden accept=".xlsx, .xls" onChange={handleFileUpload} disabled={isImporting} />
                     </label>
 
-                    <button 
+                    <button
                         onClick={fetchData}
                         className="p-2 rounded-xl bg-[#1A1A1D] text-[#8B8B90] hover:text-white transition-all border border-[#2A2A2E]"
                         title="Refresh"
@@ -512,9 +512,9 @@ export default function PendudukEditor() {
 
             {/* Add Resident Modal */}
             {isAddModalOpen && (
-                <AddResidentModal 
-                    onClose={() => setIsAddModalOpen(false)} 
-                    onSave={handleAddRow} 
+                <AddResidentModal
+                    onClose={() => setIsAddModalOpen(false)}
+                    onSave={handleAddRow}
                 />
             )}
 
@@ -542,15 +542,34 @@ function AddResidentModal({ onClose, onSave }) {
         agama: 'Islam',
         pend_terakhir: '',
         pekerjaan: '',
-        status_kawin: 'Belum Kawin',
+        status_kawin: 'Blm Kawin',
         alamat: '',
         dusun: '',
         rt: '',
         rw: ''
     })
+    const [error, setError] = useState('')
+    const [formErrors, setFormErrors] = useState({})
+    const MAX_LENGTHS = { nik: 16, no_kk: 16, nama: 255, tempat_lahir: 100, agama: 50, pend_terakhir: 100, pekerjaan: 100, alamat: 10000 }
 
     const handleSubmit = (e) => {
         e.preventDefault()
+        setError('')
+        setFormErrors({})
+
+        const errs = {}
+        const nikDigits = (form.nik || '').replace(/\D/g, '')
+        if (!nikDigits || nikDigits.length !== MAX_LENGTHS.nik) errs.nik = 'NIK harus 16 digit.'
+        if (!form.no_kk || form.no_kk.replace(/\D/g, '').length !== MAX_LENGTHS.no_kk) errs.no_kk = 'No KK harus 16 digit.'
+        if (!form.nama || form.nama.trim() === '') errs.nama = 'Nama wajib diisi.'
+        else if (form.nama.length > MAX_LENGTHS.nama) errs.nama = `Nama maksimal ${MAX_LENGTHS.nama} karakter.`
+
+        if (Object.keys(errs).length > 0) {
+            setFormErrors(errs)
+            setError('Perbaiki kesalahan sebelum menyimpan data penduduk.')
+            return
+        }
+
         onSave(form)
     }
 
@@ -561,46 +580,54 @@ function AddResidentModal({ onClose, onSave }) {
                     <h3 className="text-white font-semibold">Tambah Penduduk Baru</h3>
                     <button onClick={onClose} className="text-[#6B6B70] hover:text-white">&times;</button>
                 </div>
-                
-                <form onSubmit={handleSubmit} className="p-6 overflow-y-auto grid grid-cols-2 gap-4">
+
+                <form onSubmit={handleSubmit} noValidate className="p-6 overflow-y-auto grid grid-cols-2 gap-4">
+                    {error && (
+                        <div className="col-span-2 bg-red-500/10 border border-red-500/30 text-red-300 p-3 rounded-md">
+                            <div className="text-sm font-medium">{error}</div>
+                        </div>
+                    )}
                     <div className="col-span-1">
                         <label className="block text-[10px] uppercase font-bold text-[#6B6B70] mb-1">NIK</label>
-                        <input required value={form.nik} onChange={e => setForm({...form, nik: e.target.value})} className="w-full bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064]" />
+                        <input value={form.nik} onChange={e => setForm({ ...form, nik: e.target.value })} inputMode="numeric" maxLength={MAX_LENGTHS.nik} className="w-full bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064]" />
+                        {formErrors.nik && <p className="text-red-500 text-xs mt-1">{formErrors.nik}</p>}
                     </div>
                     <div className="col-span-1">
                         <label className="block text-[10px] uppercase font-bold text-[#6B6B70] mb-1">No KK</label>
-                        <input value={form.no_kk} onChange={e => setForm({...form, no_kk: e.target.value})} className="w-full bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064]" />
+                        <input value={form.no_kk} onChange={e => setForm({ ...form, no_kk: e.target.value })} inputMode="numeric" maxLength={MAX_LENGTHS.no_kk} className="w-full bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064]" />
+                        {formErrors.no_kk && <p className="text-red-500 text-xs mt-1">{formErrors.no_kk}</p>}
                     </div>
                     <div className="col-span-2">
                         <label className="block text-[10px] uppercase font-bold text-[#6B6B70] mb-1">Nama Lengkap</label>
-                        <input required value={form.nama} onChange={e => setForm({...form, nama: e.target.value})} className="w-full bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064]" />
+                        <input value={form.nama} onChange={e => setForm({ ...form, nama: e.target.value })} maxLength={MAX_LENGTHS.nama} className="w-full bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064]" />
+                        {formErrors.nama && <p className="text-red-500 text-xs mt-1">{formErrors.nama}</p>}
                     </div>
                     <div className="col-span-1">
                         <label className="block text-[10px] uppercase font-bold text-[#6B6B70] mb-1">Jenis Kelamin</label>
-                        <select value={form.jenis_kelamin} onChange={e => setForm({...form, jenis_kelamin: e.target.value})} className="w-full bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064]">
+                        <select value={form.jenis_kelamin} onChange={e => setForm({ ...form, jenis_kelamin: e.target.value })} className="w-full bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064]">
                             <option value="L">Laki-laki</option>
                             <option value="P">Perempuan</option>
                         </select>
                     </div>
                     <div className="col-span-1">
                         <label className="block text-[10px] uppercase font-bold text-[#6B6B70] mb-1">Agama</label>
-                        <input value={form.agama} onChange={e => setForm({...form, agama: e.target.value})} className="w-full bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064]" />
+                        <input value={form.agama} onChange={e => setForm({ ...form, agama: e.target.value })} maxLength={MAX_LENGTHS.agama} className="w-full bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064]" />
                     </div>
                     <div className="col-span-1">
                         <label className="block text-[10px] uppercase font-bold text-[#6B6B70] mb-1">Tempat Lahir</label>
-                        <input value={form.tempat_lahir} onChange={e => setForm({...form, tempat_lahir: e.target.value})} className="w-full bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064]" />
+                        <input value={form.tempat_lahir} onChange={e => setForm({ ...form, tempat_lahir: e.target.value })} className="w-full bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064]" />
                     </div>
                     <div className="col-span-1">
                         <label className="block text-[10px] uppercase font-bold text-[#6B6B70] mb-1">Tanggal Lahir</label>
-                        <input type="date" value={form.tanggal_lahir} onChange={e => setForm({...form, tanggal_lahir: e.target.value})} className="w-full bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064]" />
+                        <input type="date" value={form.tanggal_lahir} onChange={e => setForm({ ...form, tanggal_lahir: e.target.value })} className="w-full bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064]" />
                     </div>
                     <div className="col-span-2">
                         <label className="block text-[10px] uppercase font-bold text-[#6B6B70] mb-1">Pekerjaan</label>
-                        <input value={form.pekerjaan} onChange={e => setForm({...form, pekerjaan: e.target.value})} className="w-full bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064]" />
+                        <input value={form.pekerjaan} onChange={e => setForm({ ...form, pekerjaan: e.target.value })} maxLength={MAX_LENGTHS.pekerjaan} className="w-full bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064]" />
                     </div>
                     <div className="col-span-2">
                         <label className="block text-[10px] uppercase font-bold text-[#6B6B70] mb-1">Alamat</label>
-                        <input value={form.alamat} onChange={e => setForm({...form, alamat: e.target.value})} className="w-full bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064]" />
+                        <input value={form.alamat} onChange={e => setForm({ ...form, alamat: e.target.value })} maxLength={MAX_LENGTHS.alamat} className="w-full bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064]" />
                     </div>
 
                     <div className="col-span-2 flex justify-end gap-3 mt-4">

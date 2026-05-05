@@ -3,6 +3,12 @@ import { RiAddLine, RiSearchLine, RiShoppingBag3Line, RiEdit2Line, RiDeleteBinLi
 import { apiFetch, getImageKitAuth } from '../api'
 
 const IMAGEKIT_PUBLIC_KEY = 'public_oaXjLRSYC16BGPDCCi3lpc5Fd64='
+const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+const ALLOWED_IMAGE_EXTS = ['.jpg', '.jpeg', '.png', '.webp']
+const MAX_LENGTHS = { nama: 255, deskripsi: 10000, kontak: 15, image_url: 500 }
+const MAX_DECIMAL_VALUE = 5
+const DECIMAL_PATTERN = /^\d{1,3}(\.\d{1,2})?$/
 
 const formatRupiah = (num) => {
     if (!num && num !== 0) return 'Rp 0'
@@ -25,13 +31,13 @@ export default function ProdukDesa() {
     const [searchTerm, setSearchTerm] = useState('')
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [editingId, setEditingId] = useState(null)
-    const [loading, setLoading] = useState(true)
 
     const [produkData, setProdukData] = useState([])
 
-    const [form, setForm] = useState({
-        nama: '', deskripsi: '', harga: '', rating: '', kontak: '', image_url: ''
-    })
+    const [form, setForm] = useState({ nama: '', deskripsi: '', harga: '', rating: '', kontak: '', image_url: '' })
+    const [error, setError] = useState('')
+    const [formErrors, setFormErrors] = useState({})
+
 
     const fetchProduk = async () => {
         try {
@@ -40,11 +46,10 @@ export default function ProdukDesa() {
             setProdukData(data.produk || [])
         } catch (err) {
             console.error('Fetch produk error:', err)
-        } finally {
-            setLoading(false)
         }
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     useEffect(() => { fetchProduk() }, [])
 
     const filteredData = produkData.filter(item =>
@@ -56,29 +61,94 @@ export default function ProdukDesa() {
         setForm({ nama: '', deskripsi: '', harga: '', rating: '', kontak: '', image_url: '' })
         setEditingId(null)
         setIsModalOpen(false)
+        setError('')
+        setFormErrors({})
     }
 
     const handleEdit = (d) => {
         setForm({
             nama: d.nama,
             deskripsi: d.deskripsi || '',
-            harga: d.harga.toString(),
-            rating: d.rating.toString(),
-            kontak: d.kontak,
+            harga: d.harga?.toString() || '',
+            rating: d.rating?.toString() || '',
+            kontak: d.kontak || '',
             image_url: d.image_url || ''
         })
         setEditingId(d.id)
+        setFormErrors({})
         setIsModalOpen(true)
+    }
+
+    const validateRating = (value) => {
+        if (value === '') return ''
+        if (!DECIMAL_PATTERN.test(value)) {
+            return 'Rating harus berupa angka desimal dengan maksimal 2 angka di belakang koma.'
+        }
+
+        const numericValue = Number(value)
+        if (Number.isNaN(numericValue)) {
+            return 'Rating harus berupa angka yang valid.'
+        }
+
+        if (numericValue < 0 || numericValue > MAX_DECIMAL_VALUE) {
+            return `Rating harus berada di rentang 0 - ${MAX_DECIMAL_VALUE}.`
+        }
+
+        return ''
     }
 
     const handleSubmit = async (e) => {
         e.preventDefault()
+        setError('')
+
+        const nextErrors = {}
+        const nama = form.nama.trim()
+        const deskripsi = form.deskripsi.trim()
+        const kontak = form.kontak.trim()
+        const harga = form.harga.trim()
+        const rating = form.rating.trim()
+
+        if (!nama) {
+            nextErrors.nama = `Nama produk wajib diisi (1-${MAX_LENGTHS.nama} karakter).`
+        } else if (nama.length > MAX_LENGTHS.nama) {
+            nextErrors.nama = `Nama produk maksimal ${MAX_LENGTHS.nama} karakter.`
+        }
+
+        if (deskripsi.length > MAX_LENGTHS.deskripsi) {
+            nextErrors.deskripsi = `Deskripsi maksimal ${MAX_LENGTHS.deskripsi} karakter.`
+        }
+
+        if (!harga) {
+            nextErrors.harga = 'Harga wajib diisi (maksimal 18 digit).'
+        } else if (!/^\d+$/.test(harga)) {
+            nextErrors.harga = 'Harga harus berupa angka tanpa tanda baca.'
+        } else if (harga.length > 18) {
+            nextErrors.harga = 'Harga maksimal 18 digit.'
+        }
+
+        const ratingError = validateRating(rating)
+        if (ratingError) {
+            nextErrors.rating = ratingError
+        }
+
+        if (!kontak) {
+            nextErrors.kontak = `Kontak wajib diisi (1-${MAX_LENGTHS.kontak} karakter).`
+        } else if (kontak.length > MAX_LENGTHS.kontak) {
+            nextErrors.kontak = `Kontak maksimal ${MAX_LENGTHS.kontak} karakter.`
+        }
+
+        if (Object.keys(nextErrors).length > 0) {
+            setFormErrors(nextErrors)
+            setError(nextErrors.nama || nextErrors.harga || nextErrors.rating || nextErrors.kontak || nextErrors.deskripsi)
+            return
+        }
+
         const body = {
-            nama: form.nama,
+            nama,
             deskripsi: form.deskripsi,
-            harga: Number(form.harga),
-            rating: Number(form.rating) || 0,
-            kontak: form.kontak,
+            harga: Number(harga),
+            rating: rating === '' ? 0 : Number(rating),
+            kontak,
             image_url: form.image_url,
         }
         try {
@@ -90,7 +160,8 @@ export default function ProdukDesa() {
             fetchProduk()
             resetFormAndClose()
         } catch (err) {
-            alert('Gagal menyimpan: ' + err.message)
+            setError('Gagal menyimpan: ' + (err.message || 'terjadi kesalahan'))
+            console.error('Gagal menyimpan: ', err)
         }
     }
 
@@ -216,7 +287,12 @@ export default function ProdukDesa() {
                                 &times;
                             </button>
                         </div>
-                        <form className="p-6 flex flex-col gap-5" onSubmit={handleSubmit}>
+                        <form className="p-6 flex flex-col gap-5" onSubmit={handleSubmit} noValidate>
+                            {error && (
+                                <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs text-center px-4 py-3 rounded-lg">
+                                    {error}
+                                </div>
+                            )}
                             {/* Image uploader */}
                             <div>
                                 <label className="block text-[11px] font-semibold text-[#6B6B70] uppercase tracking-wider mb-1.5 leading-none">Foto Produk</label>
@@ -224,47 +300,86 @@ export default function ProdukDesa() {
                                     value={form.image_url}
                                     onChange={url => setForm(prev => ({ ...prev, image_url: url }))}
                                 />
+                                {formErrors.image_url && <p className="text-[11px] text-red-400 mt-1">{formErrors.image_url}</p>}
                             </div>
 
                             <div>
                                 <label className="block text-[11px] font-semibold text-[#6B6B70] uppercase tracking-wider mb-1.5 leading-none">Nama Produk</label>
                                 <input
-                                    type="text" required
+                                    maxLength={MAX_LENGTHS.nama}
+                                    type="text"
                                     value={form.nama}
-                                    onChange={e => setForm(prev => ({ ...prev, nama: e.target.value }))}
-                                    className="w-full px-4 py-2.5 bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors"
+                                    onChange={e => {
+                                        setForm(prev => ({ ...prev, nama: e.target.value }))
+                                        if (formErrors.nama) setFormErrors(prev => ({ ...prev, nama: '' }))
+                                        if (error) setError('')
+                                    }}
+                                    className={`w-full px-4 py-2.5 bg-[#0A0A0B] border rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors ${formErrors.nama ? 'border-red-500' : 'border-[#2A2A2E]'}`}
                                     placeholder="Mis. Madu Hutan Puundoho"
                                 />
+                                <div className="text-right text-[11px] text-[#6B6B70] mt-1">
+                                    {formErrors.nama ? (
+                                        <span className="text-[11px] text-red-400">{formErrors.nama}</span>
+                                    ) : (
+                                        <span className="text-[#6B6B70] text-[11px]">
+                                            {form.nama.length}/{MAX_LENGTHS.nama}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
 
                             <div>
                                 <label className="block text-[11px] font-semibold text-[#6B6B70] uppercase tracking-wider mb-1.5 leading-none">Deskripsi</label>
                                 <textarea
+                                    maxLength={MAX_LENGTHS.deskripsi}
                                     value={form.deskripsi}
-                                    onChange={e => setForm(prev => ({ ...prev, deskripsi: e.target.value }))}
-                                    className="w-full px-4 py-2.5 bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors min-h-[80px]"
+                                    onChange={e => {
+                                        setForm(prev => ({ ...prev, deskripsi: e.target.value }))
+                                        if (formErrors.deskripsi) setFormErrors(prev => ({ ...prev, deskripsi: '' }))
+                                        if (error) setError('')
+                                    }}
+                                    className={`w-full px-4 py-2.5 bg-[#0A0A0B] border rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors min-h-[80px] ${formErrors.deskripsi ? 'border-red-500' : 'border-[#2A2A2E]'}`}
                                     placeholder="Deskripsi singkat produk..."
                                 ></textarea>
+                                <div className="text-right text-[11px] text-[#6B6B70] mt-1">
+                                    {formErrors.deskripsi ? (
+                                        <span className="text-[11px] text-red-400">{formErrors.deskripsi}</span>
+                                    ) : (
+                                        <span className="text-[#6B6B70] text-[11px]">
+                                            {form.deskripsi.length}/{MAX_LENGTHS.deskripsi}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="flex gap-4">
                                 <div className="flex-1">
                                     <label className="block text-[11px] font-semibold text-[#6B6B70] uppercase tracking-wider mb-1.5 leading-none">Harga (Rp)</label>
                                     <input
-                                        type="number" required min="0"
+                                        maxLength={MAX_LENGTHS.harga}
+                                        type="text" inputMode="numeric"
                                         value={form.harga}
-                                        onChange={e => setForm(prev => ({ ...prev, harga: e.target.value }))}
-                                        className="w-full px-4 py-2.5 bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors"
+                                        onChange={e => {
+                                            setForm(prev => ({ ...prev, harga: e.target.value.replace(/\D/g, '') }))
+                                            if (formErrors.harga) setFormErrors(prev => ({ ...prev, harga: '' }))
+                                            if (error) setError('')
+                                        }}
+                                        className={`w-full px-4 py-2.5 bg-[#0A0A0B] border rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors ${formErrors.harga ? 'border-red-500' : 'border-[#2A2A2E]'}`}
                                         placeholder="85000"
                                     />
                                 </div>
                                 <div className="flex-1">
                                     <label className="block text-[11px] font-semibold text-[#6B6B70] uppercase tracking-wider mb-1.5 leading-none">Rating (0-5)</label>
                                     <input
-                                        type="number" min="0" max="5" step="0.1"
+                                        type="text"
+                                        inputMode="decimal"
                                         value={form.rating}
-                                        onChange={e => setForm(prev => ({ ...prev, rating: e.target.value }))}
-                                        className="w-full px-4 py-2.5 bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors"
+                                        onChange={e => {
+                                            setForm(prev => ({ ...prev, rating: e.target.value }))
+                                            if (formErrors.rating) setFormErrors(prev => ({ ...prev, rating: '' }))
+                                            if (error) setError('')
+                                        }}
+                                        className={`w-full px-4 py-2.5 bg-[#0A0A0B] border rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors ${formErrors.rating ? 'border-red-500' : 'border-[#2A2A2E]'}`}
                                         placeholder="4.5"
                                     />
                                 </div>
@@ -273,13 +388,29 @@ export default function ProdukDesa() {
                             <div>
                                 <label className="block text-[11px] font-semibold text-[#6B6B70] uppercase tracking-wider mb-1.5 leading-none">Kontak</label>
                                 <input
-                                    type="text" required
+                                    maxLength={MAX_LENGTHS.kontak}
+                                    type="text"
+                                    inputMode="numeric"
                                     value={form.kontak}
-                                    onChange={e => setForm(prev => ({ ...prev, kontak: e.target.value }))}
-                                    className="w-full px-4 py-2.5 bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors"
-                                    placeholder="08xx-xxxx-xxxx"
+                                    onChange={e => {
+                                        setForm(prev => ({ ...prev, kontak: e.target.value }))
+                                        if (formErrors.kontak) setFormErrors(prev => ({ ...prev, kontak: '' }))
+                                        if (error) setError('')
+                                    }}
+                                    className={`w-full px-4 py-2.5 bg-[#0A0A0B] border rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors ${formErrors.kontak ? 'border-red-500' : 'border-[#2A2A2E]'}`}
+                                    placeholder="81298XXXXX88"
                                 />
+                                <div className="text-right text-[11px] text-[#6B6B70] mt-1">
+                                    {formErrors.kontak ? (
+                                        <span className="text-[11px] text-red-400">{formErrors.kontak}</span>
+                                    ) : (
+                                        <span className="text-[#6B6B70] text-[11px]">
+                                            {form.kontak.length}/{MAX_LENGTHS.kontak}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
+
 
                             <div className="flex gap-3 justify-end mt-2">
                                 <button type="button" onClick={resetFormAndClose} className="px-4 py-2 text-sm font-medium text-[#8B8B90] hover:text-white transition-colors">
@@ -300,12 +431,33 @@ export default function ProdukDesa() {
 
 // --- Product Image Uploader ---
 function ProductImageUploader({ value, onChange }) {
+    const [error, setError] = useState('')
     const [uploading, setUploading] = useState(false)
     const fileInputRef = useRef(null)
 
     const handleFileChange = async (e) => {
         const file = e.target.files[0]
         if (!file) return
+        setError('')
+
+        const lowerName = (file.name || '').toLowerCase()
+        const hasValidExt = ALLOWED_IMAGE_EXTS.some(ext => lowerName.endsWith(ext))
+
+        if (!ALLOWED_IMAGE_TYPES.includes(file.type) || !hasValidExt) {
+            setError('Tipe file harus JPG, PNG, atau WebP.')
+            if (fileInputRef.current) fileInputRef.current.value = ''
+            return
+        }
+        if (file.size > MAX_FILE_SIZE) {
+            setError('Ukuran file maksimal 5MB.')
+            if (fileInputRef.current) fileInputRef.current.value = ''
+            return
+        }
+        if (file.name.length > 512) {
+            setError('Nama file maksimal 512 karakter.')
+            if (fileInputRef.current) fileInputRef.current.value = ''
+            return
+        }
 
         setUploading(true)
         try {
@@ -336,7 +488,12 @@ function ProductImageUploader({ value, onChange }) {
     }
 
     return (
-        <div>
+        <div className="flex flex-col gap-2">
+            {error && (
+                <div className="px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs text-center">
+                    {error}
+                </div>
+            )}
             {value ? (
                 <div className="relative group rounded-xl overflow-hidden border border-[#2A2A2E] aspect-[16/9] bg-[#0A0A0B]">
                     <img src={value} alt="Preview" className="w-full h-full object-cover" />

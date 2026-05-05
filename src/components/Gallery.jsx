@@ -14,6 +14,12 @@ import {
 import { apiFetch, getImageKitAuth } from '../api'
 
 const IMAGEKIT_PUBLIC_KEY = 'public_oaXjLRSYC16BGPDCCi3lpc5Fd64='
+const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+const ALLOWED_IMAGE_EXTS = ['.jpg', '.jpeg', '.png', '.webp']
+const MAX_LENGTHS = {
+    caption: 10000,
+}
 
 function formatDate(iso) {
     return new Date(iso).toLocaleDateString('id-ID', {
@@ -195,15 +201,15 @@ export default function Gallery() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {filtered.map((item) => (
-                        <div 
+                        <div
                             key={item.id}
                             className="card bg-[#141417] border border-[#1F1F23] hover:border-[#2A2A2E] transition-all overflow-hidden"
                         >
                             <figure className="group relative aspect-[4/3] overflow-hidden cursor-pointer" onClick={() => handleEdit(item)}>
                                 {item.images && item.images.length > 0 ? (
-                                    <img 
-                                        src={item.images[0]} 
-                                        alt={item.caption} 
+                                    <img
+                                        src={item.images[0]}
+                                        alt={item.caption}
                                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                     />
                                 ) : (
@@ -231,7 +237,7 @@ export default function Gallery() {
                                         <RiTimeLine size={12} />
                                         {formatDate(item.created_at)}
                                     </div>
-                                    <button 
+                                    <button
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             handleDelete(item.id);
@@ -273,16 +279,41 @@ function GalleryFormModal({ initialData, onClose, onSave }) {
     const [images, setImages] = useState(initialData?.images || [])
     const [uploading, setUploading] = useState(false)
     const [saving, setSaving] = useState(false)
+    const [error, setError] = useState('')
+    const [formErrors, setFormErrors] = useState({})
     const fileRef = useRef(null)
 
     const handleUpload = async (e) => {
         const files = Array.from(e.target.files || [])
         if (files.length === 0) return
 
+        setError('')
+        setFormErrors({})
+
+        // Validate files
+        const uploadErrors = []
+        for (const file of files) {
+            if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+                uploadErrors.push(`${file.name}: Tipe file harus JPG, PNG, atau WebP.`)
+            }
+            if (file.size > MAX_FILE_SIZE) {
+                uploadErrors.push(`${file.name}: Ukuran file maksimal 5MB.`)
+            }
+            if (file.name.length > 512) {
+                uploadErrors.push(`${file.name}: Nama file maksimal 512 karakter.`)
+            }
+        }
+
+        if (uploadErrors.length > 0) {
+            setError(uploadErrors[0])
+            setFormErrors({ images: uploadErrors })
+            return
+        }
+
         setUploading(true)
         try {
             const auth = await getImageKitAuth()
-            
+
             const uploadedUrls = await Promise.all(
                 files.map(async (file) => {
                     const formData = new FormData()
@@ -306,7 +337,7 @@ function GalleryFormModal({ initialData, onClose, onSave }) {
             setImages(prev => [...prev, ...uploadedUrls])
         } catch (err) {
             console.error('Upload failed:', err)
-            alert('Gagal mengupload gambar.')
+            setError('Gagal mengupload gambar.')
         } finally {
             setUploading(false)
         }
@@ -318,13 +349,34 @@ function GalleryFormModal({ initialData, onClose, onSave }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault()
+        setError('')
+        setFormErrors({})
+
+        const nextErrors = {}
+        const captionValue = caption.trim()
+
+        if (captionValue.length > MAX_LENGTHS.caption) {
+            nextErrors.caption = `Caption/Keterangan maksimal ${MAX_LENGTHS.caption} karakter.`
+        }
+
         if (images.length === 0) {
-            alert('Pilih setidaknya satu foto')
+            nextErrors.images = 'Pilih setidaknya satu foto.'
+        }
+
+        if (Object.keys(nextErrors).length > 0) {
+            setFormErrors(nextErrors)
+            setError(nextErrors.caption || nextErrors.images)
             return
         }
+
         setSaving(true)
-        await onSave({ caption, images })
-        setSaving(false)
+        try {
+            await onSave({ caption: caption.trim(), images })
+        } catch {
+            setError('Gagal menyimpan galeri.')
+        } finally {
+            setSaving(false)
+        }
     }
 
     return (
@@ -342,9 +394,17 @@ function GalleryFormModal({ initialData, onClose, onSave }) {
 
                 <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
                     <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
+                        {error && (
+                            <div className="px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs text-center">
+                                {error}
+                            </div>
+                        )}
                         {/* Image Grid */}
                         <div className="flex flex-col gap-3">
                             <label className="text-[#8B8B90] text-xs font-semibold uppercase tracking-wider">Koleksi Foto</label>
+                            {formErrors.images && (
+                                <p className="text-[11px] text-red-400">{formErrors.images}</p>
+                            )}
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                                 {images.map((url, idx) => (
                                     <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-[#2A2A2E] group">
@@ -386,14 +446,25 @@ function GalleryFormModal({ initialData, onClose, onSave }) {
 
                         {/* Caption */}
                         <div className="flex flex-col gap-2">
-                            <label className="text-[#8B8B90] text-xs font-semibold uppercase tracking-wider">Caption/Keterangan</label>
+                            <label className="text-[#8B8B90] text-xs font-semibold uppercase tracking-wider">Caption/Keterangan (Opsional)</label>
                             <textarea
+                                maxLength={MAX_LENGTHS.caption}
                                 value={caption}
-                                onChange={e => setCaption(e.target.value)}
+                                onChange={e => {
+                                    setCaption(e.target.value)
+                                    if (formErrors.caption) setFormErrors(prev => ({ ...prev, caption: '' }))
+                                    if (error) setError('')
+                                }}
                                 placeholder="Tulis keterangan foto di sini..."
                                 rows={4}
-                                className="w-full px-4 py-3 rounded-xl bg-[#1A1A1D] border border-[#2A2A2E] text-white text-sm focus:border-[#298064] outline-none transition-colors resize-none placeholder:text-[#4A4A4E]"
+                                className={`w-full px-4 py-3 rounded-xl bg-[#1A1A1D] border text-white text-sm focus:border-[#298064] outline-none transition-colors resize-none placeholder:text-[#4A4A4E] ${formErrors.caption ? 'border-red-500' : 'border-[#2A2A2E]'}`}
                             />
+                            <div className="text-right text-[11px] text-[#6B6B70]">
+                                {caption.length}/{MAX_LENGTHS.caption}
+                            </div>
+                            {formErrors.caption && (
+                                <p className="text-[11px] text-red-400">{formErrors.caption}</p>
+                            )}
                         </div>
                     </div>
 

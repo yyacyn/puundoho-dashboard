@@ -8,6 +8,7 @@ const MAX_LENGTHS = {
     nama_penerima: 255,
     lokasi_dusun: 100,
     status: 50,
+    keterangan: 10000,
 }
 
 const DUSUN_OPTIONS = ['Dusun 1', 'Dusun 2', 'Dusun 3', 'Dusun 4', 'Dusun 5']
@@ -178,6 +179,7 @@ export default function Bansos() {
         const namaPenerima = form.nama.trim()
         const lokasiDusun = form.dusun.trim()
         const status = form.status.trim()
+        const keterangan = form.keterangan || ''
 
         if (!namaProgram) {
             nextErrors.nama_program = `Nama Program wajib diisi (1-${MAX_LENGTHS.nama_program} karakter).`
@@ -205,6 +207,10 @@ export default function Bansos() {
             nextErrors.status = `Status harus dipilih dari daftar yang tersedia.`
         } else if (status.length > MAX_LENGTHS.status) {
             nextErrors.status = `Status maksimal ${MAX_LENGTHS.status} karakter.`
+        }
+
+        if (keterangan.length > MAX_LENGTHS.keterangan) {
+            nextErrors.keterangan = `Keterangan maksimal ${MAX_LENGTHS.keterangan} karakter.`
         }
 
         return nextErrors
@@ -311,7 +317,7 @@ export default function Bansos() {
             </div>
 
             {/* Main Table Container */}
-            <div className="rounded-xl overflow-hidden border border-[#1F1F23]">
+            <div className="rounded-xl overflow-x-auto border border-[#1F1F23]">
                 <table className="w-full border-collapse">
                     <thead>
                         <tr className="bg-[#141417] border-b border-[#1F1F23]">
@@ -537,13 +543,21 @@ export default function Bansos() {
                             <div>
                                 <label className="block text-[11px] font-semibold text-[#6B6B70] uppercase tracking-wider mb-1.5 leading-none">Keterangan (Opsional)</label>
                                 <textarea
+                                    maxLength={MAX_LENGTHS.keterangan}
                                     value={form.keterangan} onChange={e => {
                                         handleInputChange('keterangan', e.target.value)
+                                        if (formErrors.keterangan) setFormErrors(prev => ({ ...prev, keterangan: '' }))
                                         if (error) setError('')
                                     }}
-                                    className="w-full px-4 py-2.5 bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors min-h-[80px]"
+                                    className={`w-full px-4 py-2.5 bg-[#0A0A0B] border rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors min-h-[80px] ${formErrors.keterangan ? 'border-red-500' : 'border-[#2A2A2E]'}`}
                                     placeholder="Tambahkan catatan..."
                                 ></textarea>
+                                <div className="mt-1 text-[11px] text-[#6B6B70] text-right">
+                                    {form.keterangan.length}/{MAX_LENGTHS.keterangan}
+                                </div>
+                                {formErrors.keterangan && (
+                                    <p className="mt-1 text-[11px] text-red-400">{formErrors.keterangan}</p>
+                                )}
                             </div>
 
                             <div className="flex gap-3 justify-end mt-2">

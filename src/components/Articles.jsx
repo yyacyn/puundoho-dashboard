@@ -19,12 +19,27 @@ import { apiFetch, getImageKitAuth } from '../api'
 
 const IMAGEKIT_PUBLIC_KEY = 'public_oaXjLRSYC16BGPDCCi3lpc5Fd64='
 const IMAGEKIT_URL_ENDPOINT = 'https://ik.imagekit.io/yyacyn'
+const MAX_LENGTHS = {
+    title: 255,
+    excerpt: 500,
+    category: 100,
+    content: 600000,
+}
+const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+const ALLOWED_IMAGE_EXTS = ['.jpg', '.jpeg', '.png', '.webp']
 
 function formatDate(iso) {
     return new Date(iso).toLocaleDateString('id-ID', {
         day: 'numeric', month: 'short', year: 'numeric',
     })
 }
+
+const getPlainTextFromHtml = (html) => html
+    .replace(/<p><br><\/p>/g, '')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .trim()
 
 export default function Articles() {
     const [articles, setArticles] = useState([])
@@ -346,12 +361,34 @@ function ImageUploader({ value, onChange }) {
     const fileRef = useRef(null)
     const [uploading, setUploading] = useState(false)
     const [preview, setPreview] = useState(value || '')
+    const [error, setError] = useState('')
 
     useEffect(() => { setPreview(value || '') }, [value])
 
     const handleUpload = async (e) => {
         const file = e.target.files?.[0]
         if (!file) return
+
+        setError('')
+
+        // Validate file
+        if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+            setError('Tipe file harus JPG, PNG, atau WebP.')
+            return
+        }
+        if (file.size > MAX_FILE_SIZE) {
+            setError('Ukuran file maksimal 5MB.')
+            return
+        }
+        if (file.name.length > 512) {
+            setError('Nama file maksimal 512 karakter.')
+            return
+        }
+
+        if (file.length === 0) {
+            setError('Pilih setidaknya satu foto.')
+            return
+        }
 
         setUploading(true)
         try {
@@ -381,7 +418,7 @@ function ImageUploader({ value, onChange }) {
             onChange(url)
         } catch (err) {
             console.error('Image upload failed:', err)
-            alert('Gagal mengupload gambar. Coba lagi.')
+            setError('Gagal mengupload gambar. Coba lagi.')
         } finally {
             setUploading(false)
         }
@@ -390,6 +427,12 @@ function ImageUploader({ value, onChange }) {
     return (
         <div className="flex flex-col gap-1.5">
             <label className="text-[#8B8B90] text-xs font-medium uppercase tracking-wide">Cover Image</label>
+
+            {error && (
+                <div className="px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-[11px] text-center">
+                    {error}
+                </div>
+            )}
 
             {preview ? (
                 <div className="relative group">
@@ -462,6 +505,8 @@ function ArticleFormModal({ article, onClose, onSave }) {
     const [saving, setSaving] = useState(false)
     const [existingCategories, setExistingCategories] = useState([])
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
+    const [error, setError] = useState('')
+    const [formErrors, setFormErrors] = useState({})
     const dropdownRef = useRef(null)
     const quillRef = useRef(null)
 
@@ -495,17 +540,61 @@ function ArticleFormModal({ article, onClose, onSave }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault()
+        setError('')
+
+        const nextErrors = {}
+        const titleValue = title.trim()
+        const excerptValue = excerpt.trim()
+        const categoryValue = category.trim()
+        const contentValue = content || ''
+        const contentText = getPlainTextFromHtml(contentValue)
+        const coverImageValue = coverImage || ''
+
+        if (!titleValue) {
+            nextErrors.title = `Judul wajib diisi (1-${MAX_LENGTHS.title} karakter).`
+        } else if (titleValue.length > MAX_LENGTHS.title) {
+            nextErrors.title = `Judul maksimal ${MAX_LENGTHS.title} karakter.`
+        }
+
+        if (excerptValue.length > MAX_LENGTHS.excerpt) {
+            nextErrors.excerpt = `Ringkasan maksimal ${MAX_LENGTHS.excerpt} karakter.`
+        }
+
+        if (categoryValue.length > MAX_LENGTHS.category) {
+            nextErrors.category = `Kategori maksimal ${MAX_LENGTHS.category} karakter.`
+        }
+
+        if (!contentText) {
+            nextErrors.content = `Konten artikel wajib diisi (1-${MAX_LENGTHS.content} karakter).`
+        } else if (contentValue.length > MAX_LENGTHS.content) {
+            nextErrors.content = `Konten artikel maksimal ${MAX_LENGTHS.content} karakter.`
+        }
+
+        if (coverImageValue.length === 0) {
+            nextErrors.cover_image = 'Pilih setidaknya satu foto.'
+        }
+
+        if (Object.keys(nextErrors).length > 0) {
+            setFormErrors(nextErrors)
+            setError(nextErrors.title || nextErrors.excerpt || nextErrors.category || nextErrors.content || nextErrors.cover_image)
+            return
+        }
+
+        setFormErrors({})
         setSaving(true)
-        await onSave({
-            title,
-            excerpt,
-            content,
-            category,
-            status,
-            slug: slugify(title),
-            cover_image: coverImage,
-        })
-        setSaving(false)
+        try {
+            await onSave({
+                title: titleValue,
+                excerpt: excerptValue,
+                content: contentValue,
+                category: categoryValue,
+                status,
+                slug: slugify(titleValue),
+                cover_image: coverImage,
+            })
+        } finally {
+            setSaving(false)
+        }
     }
 
     // Custom image handler: upload to ImageKit instead of base64
@@ -588,10 +677,16 @@ function ArticleFormModal({ article, onClose, onSave }) {
                 </div>
 
                 {/* Two-column form */}
-                <form onSubmit={handleSubmit} className="flex flex-1 overflow-hidden">
+                <form onSubmit={handleSubmit} className="flex flex-1 overflow-hidden" noValidate>
 
                     {/* ── LEFT PANEL (35%) — metadata ── */}
                     <div className="w-[35%] shrink-0 flex flex-col gap-4 px-6 py-5 overflow-y-auto border-r border-[#2A2A2E]">
+
+                        {error && (
+                            <div className="px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs text-center">
+                                {error}
+                            </div>
+                        )}
 
                         {/* Cover Image Upload */}
                         <ImageUploader value={coverImage} onChange={setCoverImage} />
@@ -600,29 +695,54 @@ function ArticleFormModal({ article, onClose, onSave }) {
                         <div className="flex flex-col gap-1.5">
                             <label className="text-[#8B8B90] text-xs font-medium uppercase tracking-wide">Judul</label>
                             <input
-                                required
+                                maxLength={MAX_LENGTHS.title}
                                 value={title}
-                                onChange={e => setTitle(e.target.value)}
+                                onChange={e => {
+                                    setTitle(e.target.value)
+                                    if (formErrors.title) setFormErrors(prev => ({ ...prev, title: '' }))
+                                    if (error) setError('')
+                                }}
                                 placeholder="Judul artikel..."
-                                className="w-full px-4 py-3 rounded-lg bg-[#1A1A1D] border border-[#2A2A2E] text-white text-sm outline-none focus:border-[#298064] transition-colors placeholder:text-[#4A4A4E]"
+                                className={`w-full px-4 py-3 rounded-lg bg-[#1A1A1D] border text-white text-sm outline-none focus:border-[#298064] transition-colors placeholder:text-[#4A4A4E] ${formErrors.title ? 'border-red-500' : 'border-[#2A2A2E]'}`}
                             />
-                            {title && (
-                                <span className="text-[#4A4A4E] text-[11px]">
-                                    Slug: /{slugify(title)}
+                            <div className="flex items-center justify-between gap-3">
+                                {formErrors.title ? (
+                                    <span className="text-[11px] text-red-400">{formErrors.title}</span>
+                                ) : (
+                                    <span className="text-[#4A4A4E] text-[11px]">
+                                        Slug: /{slugify(title || 'artikel')}
+                                    </span>
+                                )}
+                                <span className="text-[#6B6B70] text-[11px]">
+                                    {title.length}/{MAX_LENGTHS.title}
                                 </span>
-                            )}
+                            </div>
                         </div>
 
                         {/* Excerpt */}
                         <div className="flex flex-col gap-1.5">
                             <label className="text-[#8B8B90] text-xs font-medium uppercase tracking-wide">Ringkasan</label>
                             <textarea
+                                maxLength={MAX_LENGTHS.excerpt}
                                 value={excerpt}
-                                onChange={e => setExcerpt(e.target.value)}
+                                onChange={e => {
+                                    setExcerpt(e.target.value)
+                                    if (formErrors.excerpt) setFormErrors(prev => ({ ...prev, excerpt: '' }))
+                                    if (error) setError('')
+                                }}
                                 placeholder="Ringkasan singkat artikel..."
                                 rows={3}
-                                className="w-full px-4 py-3 rounded-lg bg-[#1A1A1D] border border-[#2A2A2E] text-white text-sm outline-none focus:border-[#298064] transition-colors placeholder:text-[#4A4A4E] resize-none"
+                                className={`w-full px-4 py-3 rounded-lg bg-[#1A1A1D] border text-white text-sm outline-none focus:border-[#298064] transition-colors placeholder:text-[#4A4A4E] resize-none ${formErrors.excerpt ? 'border-red-500' : 'border-[#2A2A2E]'}`}
                             />
+                            <div className="flex items-center justify-between gap-3">
+                                {formErrors.excerpt ? (
+                                    <span className="text-[11px] text-red-400">{formErrors.excerpt}</span>
+                                ) : (
+                                    <span className="text-[#6B6B70] text-[11px]">
+                                        {excerpt.length}/{MAX_LENGTHS.excerpt}
+                                    </span>
+                                )}
+                            </div>
                         </div>
 
                         {/* Category */}
@@ -638,10 +758,10 @@ function ArticleFormModal({ article, onClose, onSave }) {
                                     <span className={category ? 'text-white' : 'text-[#4A4A4E]'}>
                                         {category || 'Pilih kategori...'}
                                     </span>
-                                    <svg 
-                                        className={`w-4 h-4 text-[#6B6B70] transition-transform ${showCategoryDropdown ? 'rotate-180' : ''}`} 
-                                        fill="none" 
-                                        stroke="currentColor" 
+                                    <svg
+                                        className={`w-4 h-4 text-[#6B6B70] transition-transform ${showCategoryDropdown ? 'rotate-180' : ''}`}
+                                        fill="none"
+                                        stroke="currentColor"
                                         viewBox="0 0 24 24"
                                     >
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -670,10 +790,15 @@ function ArticleFormModal({ article, onClose, onSave }) {
                                     <div className="px-2 py-1.5">
                                         <input
                                             type="text"
+                                            maxLength={MAX_LENGTHS.category}
                                             value={category}
-                                            onChange={e => setCategory(e.target.value)}
+                                            onChange={e => {
+                                                setCategory(e.target.value)
+                                                if (formErrors.category) setFormErrors(prev => ({ ...prev, category: '' }))
+                                                if (error) setError('')
+                                            }}
                                             placeholder="Buat Kategori Baru..."
-                                            className="w-full bg-[#141417] border border-[#2A2A2E] text-white text-xs focus:border-[#298064] outline-none px-3 py-2 rounded-md"
+                                            className={`w-full bg-[#141417] border text-white text-xs focus:border-[#298064] outline-none px-3 py-2 rounded-md ${formErrors.category ? 'border-red-500' : 'border-[#2A2A2E]'}`}
                                             onClick={e => e.stopPropagation()}
                                         />
                                     </div>
@@ -682,6 +807,9 @@ function ArticleFormModal({ article, onClose, onSave }) {
                             <p className="text-xs text-[#6B6B70] mt-0.5">
                                 Pilih dari kategori yang sudah ada atau ketik kategori baru
                             </p>
+                            {formErrors.category && (
+                                <p className="text-[11px] text-red-400">{formErrors.category}</p>
+                            )}
                         </div>
 
                         {/* Status */}
@@ -728,17 +856,30 @@ function ArticleFormModal({ article, onClose, onSave }) {
                     {/* ── RIGHT PANEL (65%) — content editor ── */}
                     <div className="flex-1 flex flex-col px-6 py-5 overflow-hidden">
                         <label className="text-[#8B8B90] text-xs font-medium uppercase tracking-wide mb-1.5 shrink-0">Konten Artikel</label>
-                        <div className="quill-dark flex-1 flex flex-col overflow-hidden [&_.ql-container]:flex-1 [&_.ql-container]:overflow-y-auto">
+                        <div className={`quill-dark flex-1 flex flex-col overflow-hidden rounded-lg border ${formErrors.content ? 'border-red-500' : 'border-[#2A2A2E]'} [&_.ql-container]:flex-1 [&_.ql-container]:overflow-y-auto`}>
                             <ReactQuill
                                 ref={quillRef}
                                 theme="snow"
                                 value={content}
-                                onChange={setContent}
+                                onChange={(value) => {
+                                    setContent(value)
+                                    if (formErrors.content) setFormErrors(prev => ({ ...prev, content: '' }))
+                                    if (error) setError('')
+                                }}
                                 placeholder="Tulis isi artikel di sini..."
                                 modules={quillModules}
                                 formats={quillFormats}
                                 style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
                             />
+                        </div>
+                        <div className="mt-2 flex items-center justify-between gap-3">
+                            {formErrors.content ? (
+                                <span className="text-[11px] text-red-400">{formErrors.content}</span>
+                            ) : (
+                                <span className="text-[11px] text-[#6B6B70]">
+                                    {content.length}/{MAX_LENGTHS.content}
+                                </span>
+                            )}
                         </div>
                     </div>
                 </form>

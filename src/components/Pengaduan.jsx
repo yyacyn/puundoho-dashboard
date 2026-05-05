@@ -228,7 +228,7 @@ export default function PengaduanList() {
             {/* Modal Detail Pengaduan */}
             {selectedPengaduan && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-                    <div className="bg-[#141417] border border-[#2A2A2E] rounded-xl w-full max-w-2xl overflow-hidden shadow-2xl">
+                    <div className="bg-[#141417] border border-[#2A2A2E] rounded-xl w-full max-w-2xl overflow-y-auto shadow-2xl">
                         <div className="p-6 border-b border-[#2A2A2E] flex justify-between items-center">
                             <h3 className="text-white font-semibold flex items-center gap-2">
                                 <RiCustomerService2Line className="text-[#298064]" />

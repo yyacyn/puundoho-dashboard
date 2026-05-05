@@ -1,6 +1,12 @@
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { RiAddLine, RiSearchLine, RiMoneyDollarCircleLine, RiEdit2Line, RiDeleteBinLine, RiArrowUpLine, RiArrowDownLine, RiFileUploadLine, RiLoader4Line, RiCloseLine } from 'react-icons/ri'
 import { apiFetch } from '../api'
+
+const MAX_LENGTHS = {
+    kategori: 255,
+    bidang: 255,
+    jumlah: 18,
+}
 
 const formatRupiah = (num) => {
     if (!num && num !== 0) return 'Rp 0'
@@ -19,6 +25,8 @@ export default function ApbDes() {
     const pdfInputRef = useRef(null)
     const [loading, setLoading] = useState(true)
     const [subLoading, setSubLoading] = useState(false)
+    const [error, setError] = useState('')
+    const [formErrors, setFormErrors] = useState({})
 
     const [apbdList, setApbdList] = useState([])
     const [pendapatanData, setPendapatanData] = useState([])
@@ -30,7 +38,7 @@ export default function ApbDes() {
     const [form, setForm] = useState({ tahun: currentY, kategori: '', bidang: '', jumlah: '' })
 
     // Fetch APBD list
-    const fetchApbdList = async () => {
+    const fetchApbdList = useCallback(async () => {
         try {
             const res = await apiFetch('/apbdes', { cache: 'no-store' })
             const data = await res.json()
@@ -44,7 +52,7 @@ export default function ApbDes() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [selectedYear])
 
     // Fetch sub-data when year changes
     const fetchSubData = async (apbdId) => {
@@ -69,10 +77,8 @@ export default function ApbDes() {
         }
     }
 
-    useEffect(() => { fetchApbdList() }, [])
+    useEffect(() => { fetchApbdList() }, [fetchApbdList])
     useEffect(() => { if (selectedYear) fetchSubData(selectedYear) }, [selectedYear])
-
-    const currentApbd = apbdList.find(a => a.id === selectedYear)
 
     const filteredPendapatan = pendapatanData.filter(d =>
         d.kategori.toLowerCase().includes(searchTerm.toLowerCase())
@@ -88,6 +94,8 @@ export default function ApbDes() {
     const resetFormAndClose = () => {
         setForm({ tahun: currentY, kategori: '', bidang: '', jumlah: '' })
         setEditingId(null)
+        setFormErrors({})
+        setError('')
         setIsModalOpen(false)
     }
 
@@ -109,6 +117,34 @@ export default function ApbDes() {
 
     const handleFormSubmit = async (e) => {
         e.preventDefault()
+        setError('')
+
+        const nextErrors = {}
+        const textValue = activeTab === 'pendapatan' ? form.kategori.trim() : form.bidang.trim()
+        const textLabel = activeTab === 'pendapatan' ? 'Kategori Pendapatan' : 'Bidang Pengeluaran'
+        const jumlahValue = form.jumlah.trim()
+
+        if (!textValue) {
+            nextErrors.text = `${textLabel} wajib diisi (1-${MAX_LENGTHS.kategori} karakter).`
+        } else if (textValue.length > MAX_LENGTHS.kategori) {
+            nextErrors.text = `${textLabel} maksimal ${MAX_LENGTHS.kategori} karakter.`
+        }
+
+        if (!jumlahValue) {
+            nextErrors.jumlah = `Jumlah wajib diisi (maksimal ${MAX_LENGTHS.jumlah} digit).`
+        } else if (!/^\d+$/.test(jumlahValue)) {
+            nextErrors.jumlah = `Jumlah harus berupa angka (maksimal ${MAX_LENGTHS.jumlah} digit).`
+        } else if (jumlahValue.length > MAX_LENGTHS.jumlah) {
+            nextErrors.jumlah = `Jumlah maksimal ${MAX_LENGTHS.jumlah} digit.`
+        }
+
+        if (Object.keys(nextErrors).length > 0) {
+            setFormErrors(nextErrors)
+            setError(nextErrors.text || nextErrors.jumlah)
+            return
+        }
+
+        setFormErrors({})
         try {
             let targetApbdId = null
             const existingApbd = apbdList.find(a => a.tahun === Number(form.tahun))
@@ -447,7 +483,12 @@ export default function ApbDes() {
                                 &times;
                             </button>
                         </div>
-                        <form className="p-6 flex flex-col gap-4" onSubmit={handleFormSubmit}>
+                        <form className="p-6 flex flex-col gap-4" onSubmit={handleFormSubmit} noValidate>
+                            {error && (
+                                <div className="px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs text-center">
+                                    {error}
+                                </div>
+                            )}
                             <div>
                                 <label className="block text-[11px] font-semibold text-[#6B6B70] uppercase tracking-wider mb-1.5 leading-none">
                                     Tahun Anggaran
@@ -468,25 +509,39 @@ export default function ApbDes() {
                                     {activeTab === 'pendapatan' ? 'Kategori Pendapatan' : 'Bidang Pengeluaran'}
                                 </label>
                                 <input
-                                    type="text" required
+                                    type="text" required maxLength={MAX_LENGTHS.kategori}
                                     value={activeTab === 'pendapatan' ? form.kategori : form.bidang}
                                     onChange={e => {
                                         const val = e.target.value
                                         setForm(prev => activeTab === 'pendapatan' ? { ...prev, kategori: val } : { ...prev, bidang: val })
+                                        if (formErrors.text) setFormErrors(prev => ({ ...prev, text: '' }))
+                                        if (error) setError('')
                                     }}
-                                    className="w-full px-4 py-2.5 bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors"
+                                    className={`w-full px-4 py-2.5 bg-[#0A0A0B] border rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors ${formErrors.text ? 'border-red-500' : 'border-[#2A2A2E]'}`}
                                     placeholder={activeTab === 'pendapatan' ? 'Mis. Dana Desa (DD)' : 'Mis. Pembangunan Desa'}
                                 />
+                                {/* {formErrors.text && (
+                                        <p className="mt-1 text-[11px] text-red-400">{formErrors.text}</p>
+                                    )} */}
                             </div>
                             <div>
                                 <label className="block text-[11px] font-semibold text-[#6B6B70] uppercase tracking-wider mb-1.5 leading-none">Jumlah (Rupiah)</label>
                                 <input
-                                    type="number" required min="0"
+                                    type="text" required maxLength={MAX_LENGTHS.jumlah}
                                     value={form.jumlah}
-                                    onChange={e => setForm(prev => ({ ...prev, jumlah: e.target.value }))}
-                                    className="w-full px-4 py-2.5 bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors"
+                                    onChange={e => {
+                                        const val = e.target.value.replace(/\D/g, '')
+                                        setForm(prev => ({ ...prev, jumlah: val }))
+                                        if (formErrors.jumlah) setFormErrors(prev => ({ ...prev, jumlah: '' }))
+                                        if (error) setError('')
+                                    }}
+                                    inputMode="numeric"
+                                    className={`w-full px-4 py-2.5 bg-[#0A0A0B] border rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors ${formErrors.jumlah ? 'border-red-500' : 'border-[#2A2A2E]'}`}
                                     placeholder="Mis. 800000000"
                                 />
+                                {/* {formErrors.jumlah && (
+                                    <p className="mt-1 text-[11px] text-red-400">{formErrors.jumlah}</p>
+                                )} */}
                             </div>
                             <div className="flex gap-3 justify-end mt-4">
                                 <button type="button" onClick={resetFormAndClose} className="px-4 py-2 text-sm font-medium text-[#8B8B90] hover:text-white transition-colors">

@@ -12,6 +12,8 @@ export default function PendudukList() {
     const [newYear, setNewYear] = useState(new Date().getFullYear())
     const [isSaving, setIsSaving] = useState(false)
     const [toast, setToast] = useState(null)
+    const [error, setError] = useState('')
+    const [formErrors, setFormErrors] = useState({})
 
     const showToast = (message, type = 'success') => {
         setToast({ message, type })
@@ -38,7 +40,18 @@ export default function PendudukList() {
 
     const handleCreateDataset = async (e) => {
         e.preventDefault()
+        setError('')
+        setFormErrors({})
         setIsSaving(true)
+        const errs = {}
+        const yearNum = parseInt(newYear)
+        if (!yearNum || yearNum < 1900 || yearNum > 2100) errs.tahun = 'Masukkan tahun yang valid.'
+        if (Object.keys(errs).length > 0) {
+            setFormErrors(errs)
+            setError('Perbaiki isian sebelum membuat dataset.')
+            setIsSaving(false)
+            return
+        }
         try {
             const res = await apiFetch('/penduduk/datasets', {
                 method: 'POST',
@@ -78,8 +91,8 @@ export default function PendudukList() {
         }
     }
 
-    const filteredDatasets = datasets.filter(d => 
-        d.tahun.toString().includes(searchTerm) || 
+    const filteredDatasets = datasets.filter(d =>
+        d.tahun.toString().includes(searchTerm) ||
         (d.nama_file && d.nama_file.toLowerCase().includes(searchTerm.toLowerCase()))
     )
 
@@ -154,8 +167,8 @@ export default function PendudukList() {
                             </tr>
                         ) : (
                             filteredDatasets.map((d, i) => (
-                                <tr 
-                                    key={d.id} 
+                                <tr
+                                    key={d.id}
                                     className={`hover:bg-[#1A1A1D] transition-colors ${i < filteredDatasets.length - 1 ? 'border-b border-[#1F1F23]' : ''}`}
                                 >
                                     <td className="px-5 py-4 bg-[#141417]">
@@ -204,17 +217,22 @@ export default function PendudukList() {
                                 &times;
                             </button>
                         </div>
-                        <form onSubmit={handleCreateDataset} className="p-6 flex flex-col gap-4">
+                        <form onSubmit={handleCreateDataset} noValidate className="p-6 flex flex-col gap-4">
+                            {error && (
+                                <div className="bg-red-500/10 border border-red-500/30 text-red-300 p-3 rounded-md">
+                                    <div className="text-sm font-medium">{error}</div>
+                                </div>
+                            )}
                             <div>
                                 <label className="block text-[11px] font-semibold text-[#6B6B70] uppercase tracking-wider mb-1.5 leading-none">Tahun Data</label>
                                 <input
                                     type="number"
-                                    required
                                     value={newYear}
                                     onChange={(e) => setNewYear(e.target.value)}
                                     className="w-full px-4 py-2.5 bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors"
                                     placeholder="Contoh: 2024"
                                 />
+                                {formErrors.tahun && <p className="text-red-500 text-xs mt-1">{formErrors.tahun}</p>}
                             </div>
                             <div className="bg-[#298064]/5 border border-[#298064]/10 rounded-lg p-3">
                                 <p className="text-[12px] text-[#8B8B90] leading-relaxed">
