@@ -2,18 +2,6 @@ import { useState, useEffect } from 'react'
 import { RiAddLine, RiSearchLine, RiHandCoinLine, RiEdit2Line, RiDeleteBinLine } from 'react-icons/ri'
 import { apiFetch } from '../api'
 
-const MAX_LENGTHS = {
-    nama_program: 255,
-    nik_penerima: 16,
-    nama_penerima: 255,
-    lokasi_dusun: 100,
-    status: 50,
-    keterangan: 10000,
-}
-
-const DUSUN_OPTIONS = ['Dusun 1', 'Dusun 2', 'Dusun 3', 'Dusun 4', 'Dusun 5']
-const STATUS_OPTIONS = ['Menunggu', 'Tersalurkan', 'Ditolak']
-
 export default function Bansos() {
     const [searchTerm, setSearchTerm] = useState('')
     const [isModalOpen, setIsModalOpen] = useState(false)
@@ -21,7 +9,6 @@ export default function Bansos() {
     const [saving, setSaving] = useState(false)
     const [bansosData, setBansosData] = useState([])
     const [error, setError] = useState('')
-    const [formErrors, setFormErrors] = useState({})
 
     const [pendudukList, setPendudukList] = useState([])
     const [suggestions, setSuggestions] = useState([])
@@ -127,8 +114,6 @@ export default function Bansos() {
     const resetFormAndClose = () => {
         setForm({ nama_program: '', dusun: 'Dusun 1', nik: '', nama: '', status: 'Menunggu', tanggal: '', keterangan: '' })
         setEditingId(null)
-        setFormErrors({})
-        setError('')
         setIsModalOpen(false)
     }
 
@@ -143,8 +128,6 @@ export default function Bansos() {
             keterangan: d.keterangan || ''
         })
         setEditingId(d.id)
-        setFormErrors({})
-        setError('')
         setIsModalOpen(true)
     }
 
@@ -167,72 +150,15 @@ export default function Bansos() {
         setShowSuggestions(false)
         setSuggestions([])
         setActiveField('')
-        setFormErrors({})
-        setError('')
-    }
-
-    const validateForm = () => {
-        const nextErrors = {}
-
-        const namaProgram = form.nama_program.trim()
-        const nikPenerima = form.nik.trim()
-        const namaPenerima = form.nama.trim()
-        const lokasiDusun = form.dusun.trim()
-        const status = form.status.trim()
-        const keterangan = form.keterangan || ''
-
-        if (!namaProgram) {
-            nextErrors.nama_program = `Nama Program wajib diisi (1-${MAX_LENGTHS.nama_program} karakter).`
-        } else if (namaProgram.length > MAX_LENGTHS.nama_program) {
-            nextErrors.nama_program = `Nama Program maksimal ${MAX_LENGTHS.nama_program} karakter.`
-        }
-
-        if (nikPenerima.length !== MAX_LENGTHS.nik_penerima) {
-            nextErrors.nik = `NIK Penerima harus tepat ${MAX_LENGTHS.nik_penerima} karakter.`
-        }
-
-        if (!namaPenerima) {
-            nextErrors.nama = `Nama Penerima wajib diisi (1-${MAX_LENGTHS.nama_penerima} karakter).`
-        } else if (namaPenerima.length > MAX_LENGTHS.nama_penerima) {
-            nextErrors.nama = `Nama Penerima maksimal ${MAX_LENGTHS.nama_penerima} karakter.`
-        }
-
-        if (!DUSUN_OPTIONS.includes(lokasiDusun)) {
-            nextErrors.dusun = `Dusun Wilayah harus dipilih dari daftar yang tersedia.`
-        } else if (lokasiDusun.length > MAX_LENGTHS.lokasi_dusun) {
-            nextErrors.dusun = `Dusun Wilayah maksimal ${MAX_LENGTHS.lokasi_dusun} karakter.`
-        }
-
-        if (!STATUS_OPTIONS.includes(status)) {
-            nextErrors.status = `Status harus dipilih dari daftar yang tersedia.`
-        } else if (status.length > MAX_LENGTHS.status) {
-            nextErrors.status = `Status maksimal ${MAX_LENGTHS.status} karakter.`
-        }
-
-        if (keterangan.length > MAX_LENGTHS.keterangan) {
-            nextErrors.keterangan = `Keterangan maksimal ${MAX_LENGTHS.keterangan} karakter.`
-        }
-
-        return nextErrors
     }
 
     const handleSave = async (e) => {
         e.preventDefault()
 
-        const nextErrors = validateForm()
-        if (Object.keys(nextErrors).length > 0) {
-            setFormErrors(nextErrors)
-            setError(nextErrors[Object.keys(nextErrors)[0]])
-            return
-        }
-
-        setFormErrors({})
-        setError('')
-
         const payload = {
-            nama_program: form.nama_program.trim(),
-            nik_penerima: form.nik.trim(),
-            nama_penerima: form.nama.trim(),
+            nama_program: form.nama_program,
+            nik_penerima: form.nik,
+            nama_penerima: form.nama,
             lokasi_dusun: form.dusun,
             status: form.status,
             tanggal_penyaluran: form.tanggal,
@@ -258,7 +184,7 @@ export default function Bansos() {
             setIsModalOpen(false)
         } catch (err) {
             console.error(err)
-            setError(err.message || 'Gagal menyimpan data bansos')
+            alert('Gagal menyimpan data bansos')
         } finally {
             setSaving(false)
         }
@@ -296,12 +222,6 @@ export default function Bansos() {
                 </button>
             </div>
 
-            {error && (
-                <div className="px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs text-center">
-                    {error}
-                </div>
-            )}
-
             {/* Toolbar */}
             <div className="flex items-center gap-3">
                 <div className="flex-1 flex items-center gap-2.5 px-4 py-3 rounded-lg bg-[#141417] border border-[#2A2A2E]">
@@ -317,7 +237,7 @@ export default function Bansos() {
             </div>
 
             {/* Main Table Container */}
-            <div className="rounded-xl overflow-x-auto border border-[#1F1F23]">
+            <div className="rounded-xl overflow-hidden border border-[#1F1F23]">
                 <table className="w-full border-collapse">
                     <thead>
                         <tr className="bg-[#141417] border-b border-[#1F1F23]">
@@ -420,39 +340,28 @@ export default function Bansos() {
                                 &times;
                             </button>
                         </div>
-                        <form className="p-6 flex flex-col gap-5" onSubmit={handleSave} noValidate>
-                            {error && (
-                                <div className="px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs text-center">
-                                    {error}
-                                </div>
-                            )}
+                        <form className="p-6 flex flex-col gap-5" onSubmit={handleSave}>
                             <div className="flex gap-4">
                                 <div className="flex-1">
                                     <label className="block text-[11px] font-semibold text-[#6B6B70] uppercase tracking-wider mb-1.5 leading-none">Nama Program</label>
                                     <input
-                                        type="text" maxLength={MAX_LENGTHS.nama_program}
-                                        value={form.nama_program} onChange={e => {
-                                            handleInputChange('nama_program', e.target.value)
-                                            if (formErrors.nama_program) setFormErrors(prev => ({ ...prev, nama_program: '' }))
-                                            if (error) setError('')
-                                        }}
-                                        className={`w-full px-4 py-2.5 bg-[#0A0A0B] border rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors ${formErrors.nama_program ? 'border-red-500' : 'border-[#2A2A2E]'}`}
+                                        type="text" required
+                                        value={form.nama_program} onChange={e => handleInputChange('nama_program', e.target.value)}
+                                        className="w-full px-4 py-2.5 bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors"
                                         placeholder="Mis. BLT Dana Desa"
                                     />
                                 </div>
                                 <div className="flex-1">
                                     <label className="block text-[11px] font-semibold text-[#6B6B70] uppercase tracking-wider mb-1.5 leading-none">Dusun Wilayah</label>
                                     <select
-                                        value={form.dusun} onChange={e => {
-                                            handleInputChange('dusun', e.target.value)
-                                            if (formErrors.dusun) setFormErrors(prev => ({ ...prev, dusun: '' }))
-                                            if (error) setError('')
-                                        }}
-                                        className={`w-full px-4 py-2.5 bg-[#0A0A0B] border rounded-lg text-sm text-[#ADADB0] focus:outline-none focus:border-[#298064] transition-colors ${formErrors.dusun ? 'border-red-500' : 'border-[#2A2A2E]'}`}
+                                        value={form.dusun} onChange={e => handleInputChange('dusun', e.target.value)}
+                                        className="w-full px-4 py-2.5 bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg text-sm text-[#ADADB0] focus:outline-none focus:border-[#298064] transition-colors"
                                     >
-                                        {DUSUN_OPTIONS.map((dusun) => (
-                                            <option key={dusun} value={dusun}>{dusun}</option>
-                                        ))}
+                                        <option value="Dusun 1">Dusun 1</option>
+                                        <option value="Dusun 2">Dusun 2</option>
+                                        <option value="Dusun 3">Dusun 3</option>
+                                        <option value="Dusun 4">Dusun 4</option>
+                                        <option value="Dusun 5">Dusun 5</option>
                                     </select>
                                 </div>
                             </div>
@@ -461,15 +370,11 @@ export default function Bansos() {
                                 <div className="flex-1 relative">
                                     <label className="block text-[11px] font-semibold text-[#6B6B70] uppercase tracking-wider mb-1.5 leading-none">NIK Penerima</label>
                                     <input
-                                        type="text" inputMode="numeric" required maxLength={MAX_LENGTHS.nik_penerima}
-                                        value={form.nik} onChange={e => {
-                                            handleInputChange('nik', e.target.value)
-                                            if (formErrors.nik) setFormErrors(prev => ({ ...prev, nik: '' }))
-                                            if (error) setError('')
-                                        }}
+                                        type="text" pattern="[0-9]{16}" title="16 Digit NIK"
+                                        value={form.nik} onChange={e => handleInputChange('nik', e.target.value)}
                                         onFocus={() => { if (form.nik.length >= 2) setShowSuggestions(true); setActiveField('nik') }}
                                         onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                                        className={`w-full px-4 py-2.5 bg-[#0A0A0B] border rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors ${formErrors.nik ? 'border-red-500' : 'border-[#2A2A2E]'}`}
+                                        className="w-full px-4 py-2.5 bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors"
                                         placeholder="16 digit NIK"
                                     />
                                     {showSuggestions && activeField === 'nik' && (
@@ -486,15 +391,11 @@ export default function Bansos() {
                                 <div className="flex-1 relative">
                                     <label className="block text-[11px] font-semibold text-[#6B6B70] uppercase tracking-wider mb-1.5 leading-none">Nama Penerima</label>
                                     <input
-                                        type="text" maxLength={MAX_LENGTHS.nama_penerima}
-                                        value={form.nama} onChange={e => {
-                                            handleInputChange('nama', e.target.value)
-                                            if (formErrors.nama) setFormErrors(prev => ({ ...prev, nama: '' }))
-                                            if (error) setError('')
-                                        }}
+                                        type="text" required
+                                        value={form.nama} onChange={e => handleInputChange('nama', e.target.value)}
                                         onFocus={() => { if (form.nama.length >= 2) setShowSuggestions(true); setActiveField('nama') }}
                                         onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                                        className={`w-full px-4 py-2.5 bg-[#0A0A0B] border rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors ${formErrors.nama ? 'border-red-500' : 'border-[#2A2A2E]'}`}
+                                        className="w-full px-4 py-2.5 bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors"
                                         placeholder="Sesuai KTP..."
                                     />
                                     {showSuggestions && activeField === 'nama' && (
@@ -514,26 +415,19 @@ export default function Bansos() {
                                 <div className="flex-1">
                                     <label className="block text-[11px] font-semibold text-[#6B6B70] uppercase tracking-wider mb-1.5 leading-none">Status</label>
                                     <select
-                                        value={form.status} onChange={e => {
-                                            handleInputChange('status', e.target.value)
-                                            if (formErrors.status) setFormErrors(prev => ({ ...prev, status: '' }))
-                                            if (error) setError('')
-                                        }}
-                                        className={`w-full px-4 py-2.5 bg-[#0A0A0B] border rounded-lg text-sm text-[#ADADB0] focus:outline-none focus:border-[#298064] transition-colors ${formErrors.status ? 'border-red-500' : 'border-[#2A2A2E]'}`}
+                                        value={form.status} onChange={e => handleInputChange('status', e.target.value)}
+                                        className="w-full px-4 py-2.5 bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg text-sm text-[#ADADB0] focus:outline-none focus:border-[#298064] transition-colors"
                                     >
-                                        {STATUS_OPTIONS.map((status) => (
-                                            <option key={status} value={status}>{status}</option>
-                                        ))}
+                                        <option value="Menunggu">Menunggu</option>
+                                        <option value="Tersalurkan">Tersalurkan</option>
+                                        <option value="Ditolak">Ditolak</option>
                                     </select>
                                 </div>
                                 <div className="flex-1">
                                     <label className="block text-[11px] font-semibold text-[#6B6B70] uppercase tracking-wider mb-1.5 leading-none">Tanggal Penyaluran</label>
                                     <input
                                         type="date"
-                                        value={form.tanggal} onChange={e => {
-                                            handleInputChange('tanggal', e.target.value)
-                                            if (error) setError('')
-                                        }}
+                                        value={form.tanggal} onChange={e => handleInputChange('tanggal', e.target.value)}
                                         className="w-full px-4 py-2.5 bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg text-sm text-[#ADADB0] focus:outline-none focus:border-[#298064] transition-colors"
                                         style={{ colorScheme: 'dark' }}
                                     />
@@ -543,21 +437,10 @@ export default function Bansos() {
                             <div>
                                 <label className="block text-[11px] font-semibold text-[#6B6B70] uppercase tracking-wider mb-1.5 leading-none">Keterangan (Opsional)</label>
                                 <textarea
-                                    maxLength={MAX_LENGTHS.keterangan}
-                                    value={form.keterangan} onChange={e => {
-                                        handleInputChange('keterangan', e.target.value)
-                                        if (formErrors.keterangan) setFormErrors(prev => ({ ...prev, keterangan: '' }))
-                                        if (error) setError('')
-                                    }}
-                                    className={`w-full px-4 py-2.5 bg-[#0A0A0B] border rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors min-h-[80px] ${formErrors.keterangan ? 'border-red-500' : 'border-[#2A2A2E]'}`}
+                                    value={form.keterangan} onChange={e => handleInputChange('keterangan', e.target.value)}
+                                    className="w-full px-4 py-2.5 bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors min-h-[80px]"
                                     placeholder="Tambahkan catatan..."
                                 ></textarea>
-                                <div className="mt-1 text-[11px] text-[#6B6B70] text-right">
-                                    {form.keterangan.length}/{MAX_LENGTHS.keterangan}
-                                </div>
-                                {formErrors.keterangan && (
-                                    <p className="mt-1 text-[11px] text-red-400">{formErrors.keterangan}</p>
-                                )}
                             </div>
 
                             <div className="flex gap-3 justify-end mt-2">
