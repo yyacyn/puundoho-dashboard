@@ -25,7 +25,6 @@ const navItems = [
     { icon: RiGroupLine, label: 'Penduduk', to: '/dashboard/penduduk', roles: ['admin'] },
     { icon: RiHeartPulseLine, label: 'Stunting', to: '/dashboard/stunting', roles: ['admin'] },
     { icon: RiHandCoinLine, label: 'Bansos', to: '/dashboard/keuangan/bansos', roles: ['bendahara'] },
-    { icon: RiHandCoinLine, label: 'Bansos', to: '/dashboard/bansos', roles: ['bendahara'] },
     { icon: RiMap2Line, label: 'Dusun Desa', to: '/dashboard/dusun', roles: ['admin'] },
     { icon: RiBarChartBoxLine, label: 'IDM & SDGs', to: '/dashboard/idm-sdgs', roles: ['admin'] },
     { icon: RiBarChartBoxLine, label: 'APBDes', to: '/dashboard/keuangan/apbdes', roles: ['bendahara'] },
