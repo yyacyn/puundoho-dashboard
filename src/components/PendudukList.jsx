@@ -228,8 +228,11 @@ export default function PendudukList() {
                                 <input
                                     type="number"
                                     value={newYear}
-                                    onChange={(e) => setNewYear(e.target.value)}
-                                    className="w-full px-4 py-2.5 bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors"
+                                    onChange={(e) => {
+                                        setNewYear(e.target.value)
+                                        if (formErrors.tahun) setFormErrors({})
+                                    }}
+                                    className={`w-full px-4 py-2.5 bg-[#0A0A0B] border rounded-lg text-sm text-white focus:outline-none focus:border-[#298064] transition-colors ${formErrors.tahun ? 'border-red-500' : 'border-[#2A2A2E]'}`}
                                     placeholder="Contoh: 2024"
                                 />
                                 {formErrors.tahun && <p className="text-red-500 text-xs mt-1">{formErrors.tahun}</p>}
@@ -242,7 +245,11 @@ export default function PendudukList() {
                             <div className="flex gap-3 justify-end mt-4">
                                 <button
                                     type="button"
-                                    onClick={() => setIsModalOpen(false)}
+                                    onClick={() => {
+                                        setIsModalOpen(false)
+                                        setFormErrors({})
+                                        setError('')
+                                    }}
                                     className="px-4 py-2 text-sm font-medium text-[#8B8B90] hover:text-white transition-colors"
                                 >
                                     Batal

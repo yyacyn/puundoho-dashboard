@@ -10,6 +10,8 @@ import Stunting from './Stunting'
 import DusunList from './DusunList'
 import IdmSdgs from './IdmSdgs'
 import Bansos from './Bansos'
+import Belanja from './Belanja'
+import ApbDes from './ApbDes'
 import Pengaduan from './Pengaduan'
 import Pengajuan from './Pengajuan'
 import { RiAlertLine } from 'react-icons/ri'
@@ -18,7 +20,7 @@ import { RiAlertLine } from 'react-icons/ri'
 function ComingSoon({ title }) {
     return (
         <div className="flex flex-col items-center justify-center h-full gap-4 text-center px-10 py-20">
-            <RiAlertLine size={50}/>
+            <RiAlertLine size={50} />
             <h2 className="text-white text-2xl font-semibold">{title}</h2>
             <p className="text-[#6B6B70] text-sm max-w-xs">
                 Halaman ini sedang dalam pengembangan.
@@ -40,11 +42,11 @@ export default function DashboardLayout({ user, role, onLogout }) {
                     <Route path="penduduk" element={<PendudukList />} />
                     <Route path="penduduk/:id" element={<PendudukEditor />} />
                     <Route path="stunting" element={<Stunting />} />
-                    <Route path="bansos" element={<Bansos />} />
+                    <Route path="keuangan/bansos" element={<Bansos />} />
                     <Route path="dusun" element={<DusunList />} />
                     <Route path="idm-sdgs" element={<IdmSdgs />} />
-                    <Route path="keuangan/apbdes" element={<ComingSoon title="APBDes" />} />
-                    <Route path="keuangan/belanja" element={<ComingSoon title="Belanja" />} />
+                    <Route path="keuangan/apbdes" element={<ApbDes />} />
+                    <Route path="keuangan/belanja" element={<Belanja />} />
                     <Route path="listing" element={<Listing />} />
                     <Route path="berita" element={<Articles />} />
                     <Route path="galeri" element={<Gallery />} />

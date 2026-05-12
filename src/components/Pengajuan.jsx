@@ -146,7 +146,7 @@ export default function Pengajuan() {
             )}
 
             {/* Main Table Container */}
-            <div className="rounded-xl overflow-hidden border border-[#1F1F23]">
+            <div className="rounded-xl overflow-x-auto border border-[#1F1F23]">
                 <table className="w-full border-collapse">
                     <thead>
                         <tr className="bg-[#141417] border-b border-[#1F1F23]">
@@ -218,7 +218,7 @@ export default function Pengajuan() {
             {/* Modal Detail Pengajuan */}
             {selectedPengajuan && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-                    <div className="bg-[#141417] border border-[#2A2A2E] rounded-xl w-full max-w-2xl overflow-hidden shadow-2xl">
+                    <div className="bg-[#141417] border border-[#2A2A2E] rounded-xl w-full max-w-2xl overflow-x-scroll shadow-2xl">
                         <div className="p-6 border-b border-[#2A2A2E] flex justify-between items-center">
                             <h3 className="text-white font-semibold flex items-center gap-2">
                                 <RiFilePaper2Line className="text-[#298064]" />

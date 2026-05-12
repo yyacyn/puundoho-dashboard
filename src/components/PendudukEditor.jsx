@@ -550,7 +550,18 @@ function AddResidentModal({ onClose, onSave }) {
     })
     const [error, setError] = useState('')
     const [formErrors, setFormErrors] = useState({})
-    const MAX_LENGTHS = { nik: 16, no_kk: 16, nama: 255, tempat_lahir: 100, agama: 50, pend_terakhir: 100, pekerjaan: 100, alamat: 10000 }
+    const MAX_LENGTHS = {
+        nik: 16,
+        no_kk: 16,
+        nama: 255,
+        tempat_lahir: 100,
+        agama: 50,
+        pend_terakhir: 100,
+        pekerjaan: 100,
+        alamat: 10000,
+        status_kawin: 50
+    }
+    const STATUS_KAWIN_OPTIONS = ['Blm Kawin', 'Kawin']
 
     const handleSubmit = (e) => {
         e.preventDefault()
@@ -559,14 +570,64 @@ function AddResidentModal({ onClose, onSave }) {
 
         const errs = {}
         const nikDigits = (form.nik || '').replace(/\D/g, '')
-        if (!nikDigits || nikDigits.length !== MAX_LENGTHS.nik) errs.nik = 'NIK harus 16 digit.'
-        if (!form.no_kk || form.no_kk.replace(/\D/g, '').length !== MAX_LENGTHS.no_kk) errs.no_kk = 'No KK harus 16 digit.'
-        if (!form.nama || form.nama.trim() === '') errs.nama = 'Nama wajib diisi.'
-        else if (form.nama.length > MAX_LENGTHS.nama) errs.nama = `Nama maksimal ${MAX_LENGTHS.nama} karakter.`
+        const noKKDigits = (form.no_kk || '').replace(/\D/g, '')
+
+        // NIK validation
+        if (!nikDigits || nikDigits.length !== MAX_LENGTHS.nik) {
+            errs.nik = 'NIK harus 16 digit.'
+        }
+
+        // No KK validation
+        if (!noKKDigits || noKKDigits.length !== MAX_LENGTHS.no_kk) {
+            errs.no_kk = 'No KK harus 16 digit.'
+        }
+
+        // Nama validation
+        if (!form.nama || form.nama.trim() === '') {
+            errs.nama = `Nama lengkap wajib diisi (1-${MAX_LENGTHS.nama} karakter).`
+        } else if (form.nama.length > MAX_LENGTHS.nama) {
+            errs.nama = `Nama maksimal ${MAX_LENGTHS.nama} karakter.`
+        }
+
+        // Jenis Kelamin validation
+        if (!form.jenis_kelamin) {
+            errs.jenis_kelamin = 'Jenis kelamin wajib dipilih.'
+        }
+
+        // Tempat Lahir validation
+        if (!form.tempat_lahir || form.tempat_lahir.trim() === '') {
+            errs.tempat_lahir = `Tempat lahir wajib diisi (1-${MAX_LENGTHS.tempat_lahir} karakter).`
+        } else if (form.tempat_lahir.length > MAX_LENGTHS.tempat_lahir) {
+            errs.tempat_lahir = `Tempat lahir maksimal ${MAX_LENGTHS.tempat_lahir} karakter.`
+        }
+
+        // Tanggal Lahir validation
+        if (!form.tanggal_lahir) {
+            errs.tanggal_lahir = 'Tanggal lahir wajib diisi.'
+        }
+
+        // Agama validation
+        if (!form.agama || form.agama.trim() === '') {
+            errs.agama = `Agama wajib diisi (1-${MAX_LENGTHS.agama} karakter).`
+        } else if (form.agama.length > MAX_LENGTHS.agama) {
+            errs.agama = `Agama maksimal ${MAX_LENGTHS.agama} karakter.`
+        }
+
+        // Status Kawin validation
+        if (!form.status_kawin) {
+            errs.status_kawin = 'Status perkawinan wajib dipilih.'
+        }
+
+        // Alamat validation
+        if (!form.alamat || form.alamat.trim() === '') {
+            errs.alamat = `Alamat wajib diisi (1-${MAX_LENGTHS.alamat} karakter).`
+        } else if (form.alamat.length > MAX_LENGTHS.alamat) {
+            errs.alamat = `Alamat maksimal ${MAX_LENGTHS.alamat} karakter.`
+        }
 
         if (Object.keys(errs).length > 0) {
             setFormErrors(errs)
-            setError('Perbaiki kesalahan sebelum menyimpan data penduduk.')
+            setError(errs[Object.keys(errs)[0]])
             return
         }
 
@@ -588,54 +649,152 @@ function AddResidentModal({ onClose, onSave }) {
                         </div>
                     )}
                     <div className="col-span-1">
-                        <label className="block text-[10px] uppercase font-bold text-[#6B6B70] mb-1">NIK</label>
-                        <input value={form.nik} onChange={e => setForm({ ...form, nik: e.target.value })} inputMode="numeric" maxLength={MAX_LENGTHS.nik} className="w-full bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064]" />
+                        <label className="block text-[11px] uppercase font-bold text-[#6B6B70] mb-1.5">NIK</label>
+                        <input
+                            value={form.nik}
+                            onChange={e => {
+                                setForm({ ...form, nik: e.target.value })
+                                if (formErrors.nik) setFormErrors(prev => ({ ...prev, nik: '' }))
+                            }}
+                            inputMode="numeric"
+                            maxLength={MAX_LENGTHS.nik}
+                            className={`w-full bg-[#0A0A0B] border rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064] transition-colors ${formErrors.nik ? 'border-red-500' : 'border-[#2A2A2E]'}`}
+                            placeholder="16 digit NIK"
+                        />
                         {formErrors.nik && <p className="text-red-500 text-xs mt-1">{formErrors.nik}</p>}
                     </div>
                     <div className="col-span-1">
-                        <label className="block text-[10px] uppercase font-bold text-[#6B6B70] mb-1">No KK</label>
-                        <input value={form.no_kk} onChange={e => setForm({ ...form, no_kk: e.target.value })} inputMode="numeric" maxLength={MAX_LENGTHS.no_kk} className="w-full bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064]" />
+                        <label className="block text-[11px] uppercase font-bold text-[#6B6B70] mb-1.5">No KK</label>
+                        <input
+                            value={form.no_kk}
+                            onChange={e => {
+                                setForm({ ...form, no_kk: e.target.value })
+                                if (formErrors.no_kk) setFormErrors(prev => ({ ...prev, no_kk: '' }))
+                            }}
+                            inputMode="numeric"
+                            maxLength={MAX_LENGTHS.no_kk}
+                            className={`w-full bg-[#0A0A0B] border rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064] transition-colors ${formErrors.no_kk ? 'border-red-500' : 'border-[#2A2A2E]'}`}
+                            placeholder="16 digit No KK"
+                        />
                         {formErrors.no_kk && <p className="text-red-500 text-xs mt-1">{formErrors.no_kk}</p>}
                     </div>
                     <div className="col-span-2">
-                        <label className="block text-[10px] uppercase font-bold text-[#6B6B70] mb-1">Nama Lengkap</label>
-                        <input value={form.nama} onChange={e => setForm({ ...form, nama: e.target.value })} maxLength={MAX_LENGTHS.nama} className="w-full bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064]" />
+                        <label className="block text-[11px] uppercase font-bold text-[#6B6B70] mb-1.5">Nama Lengkap</label>
+                        <input
+                            value={form.nama}
+                            onChange={e => {
+                                setForm({ ...form, nama: e.target.value })
+                                if (formErrors.nama) setFormErrors(prev => ({ ...prev, nama: '' }))
+                            }}
+                            maxLength={MAX_LENGTHS.nama}
+                            className={`w-full bg-[#0A0A0B] border rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064] transition-colors ${formErrors.nama ? 'border-red-500' : 'border-[#2A2A2E]'}`}
+                            placeholder="Sesuai KTP"
+                        />
                         {formErrors.nama && <p className="text-red-500 text-xs mt-1">{formErrors.nama}</p>}
                     </div>
                     <div className="col-span-1">
-                        <label className="block text-[10px] uppercase font-bold text-[#6B6B70] mb-1">Jenis Kelamin</label>
-                        <select value={form.jenis_kelamin} onChange={e => setForm({ ...form, jenis_kelamin: e.target.value })} className="w-full bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064]">
+                        <label className="block text-[11px] uppercase font-bold text-[#6B6B70] mb-1.5">Jenis Kelamin</label>
+                        <select
+                            value={form.jenis_kelamin}
+                            onChange={e => {
+                                setForm({ ...form, jenis_kelamin: e.target.value })
+                                if (formErrors.jenis_kelamin) setFormErrors(prev => ({ ...prev, jenis_kelamin: '' }))
+                            }}
+                            className={`w-full bg-[#0A0A0B] border rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064] transition-colors ${formErrors.jenis_kelamin ? 'border-red-500' : 'border-[#2A2A2E]'}`}
+                        >
                             <option value="L">Laki-laki</option>
                             <option value="P">Perempuan</option>
                         </select>
+                        {formErrors.jenis_kelamin && <p className="text-red-500 text-xs mt-1">{formErrors.jenis_kelamin}</p>}
                     </div>
                     <div className="col-span-1">
-                        <label className="block text-[10px] uppercase font-bold text-[#6B6B70] mb-1">Agama</label>
-                        <input value={form.agama} onChange={e => setForm({ ...form, agama: e.target.value })} maxLength={MAX_LENGTHS.agama} className="w-full bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064]" />
+                        <label className="block text-[11px] uppercase font-bold text-[#6B6B70] mb-1.5">Status Perkawinan</label>
+                        <select
+                            value={form.status_kawin}
+                            onChange={e => {
+                                setForm({ ...form, status_kawin: e.target.value })
+                                if (formErrors.status_kawin) setFormErrors(prev => ({ ...prev, status_kawin: '' }))
+                            }}
+                            className={`w-full bg-[#0A0A0B] border rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064] transition-colors ${formErrors.status_kawin ? 'border-red-500' : 'border-[#2A2A2E]'}`}
+                        >
+                            {STATUS_KAWIN_OPTIONS.map((option) => (
+                                <option key={option} value={option}>{option}</option>
+                            ))}
+                        </select>
+                        {formErrors.status_kawin && <p className="text-red-500 text-xs mt-1">{formErrors.status_kawin}</p>}
                     </div>
                     <div className="col-span-1">
-                        <label className="block text-[10px] uppercase font-bold text-[#6B6B70] mb-1">Tempat Lahir</label>
-                        <input value={form.tempat_lahir} onChange={e => setForm({ ...form, tempat_lahir: e.target.value })} className="w-full bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064]" />
+                        <label className="block text-[11px] uppercase font-bold text-[#6B6B70] mb-1.5">Tempat Lahir</label>
+                        <input
+                            value={form.tempat_lahir}
+                            onChange={e => {
+                                setForm({ ...form, tempat_lahir: e.target.value })
+                                if (formErrors.tempat_lahir) setFormErrors(prev => ({ ...prev, tempat_lahir: '' }))
+                            }}
+                            maxLength={MAX_LENGTHS.tempat_lahir}
+                            className={`w-full bg-[#0A0A0B] border rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064] transition-colors ${formErrors.tempat_lahir ? 'border-red-500' : 'border-[#2A2A2E]'}`}
+                            placeholder="Kota/Kabupaten lahir"
+                        />
+                        {formErrors.tempat_lahir && <p className="text-red-500 text-xs mt-1">{formErrors.tempat_lahir}</p>}
                     </div>
                     <div className="col-span-1">
-                        <label className="block text-[10px] uppercase font-bold text-[#6B6B70] mb-1">Tanggal Lahir</label>
-                        <input type="date" value={form.tanggal_lahir} onChange={e => setForm({ ...form, tanggal_lahir: e.target.value })} className="w-full bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064]" />
+                        <label className="block text-[11px] uppercase font-bold text-[#6B6B70] mb-1.5">Tanggal Lahir</label>
+                        <input
+                            type="date"
+                            value={form.tanggal_lahir}
+                            onChange={e => {
+                                setForm({ ...form, tanggal_lahir: e.target.value })
+                                if (formErrors.tanggal_lahir) setFormErrors(prev => ({ ...prev, tanggal_lahir: '' }))
+                            }}
+                            className={`w-full bg-[#0A0A0B] border rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064] transition-colors ${formErrors.tanggal_lahir ? 'border-red-500' : 'border-[#2A2A2E]'}`}
+                            style={{ colorScheme: 'dark' }}
+                        />
+                        {formErrors.tanggal_lahir && <p className="text-red-500 text-xs mt-1">{formErrors.tanggal_lahir}</p>}
                     </div>
                     <div className="col-span-2">
-                        <label className="block text-[10px] uppercase font-bold text-[#6B6B70] mb-1">Pekerjaan</label>
-                        <input value={form.pekerjaan} onChange={e => setForm({ ...form, pekerjaan: e.target.value })} maxLength={MAX_LENGTHS.pekerjaan} className="w-full bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064]" />
+                        <label className="block text-[11px] uppercase font-bold text-[#6B6B70] mb-1.5">Agama</label>
+                        <input
+                            value={form.agama}
+                            onChange={e => {
+                                setForm({ ...form, agama: e.target.value })
+                                if (formErrors.agama) setFormErrors(prev => ({ ...prev, agama: '' }))
+                            }}
+                            maxLength={MAX_LENGTHS.agama}
+                            className={`w-full bg-[#0A0A0B] border rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064] transition-colors ${formErrors.agama ? 'border-red-500' : 'border-[#2A2A2E]'}`}
+                            placeholder="Agama"
+                        />
+                        {formErrors.agama && <p className="text-red-500 text-xs mt-1">{formErrors.agama}</p>}
                     </div>
                     <div className="col-span-2">
-                        <label className="block text-[10px] uppercase font-bold text-[#6B6B70] mb-1">Alamat</label>
-                        <input value={form.alamat} onChange={e => setForm({ ...form, alamat: e.target.value })} maxLength={MAX_LENGTHS.alamat} className="w-full bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064]" />
+                        <label className="block text-[11px] uppercase font-bold text-[#6B6B70] mb-1.5">Pekerjaan (Opsional)</label>
+                        <input
+                            value={form.pekerjaan}
+                            onChange={e => setForm({ ...form, pekerjaan: e.target.value })}
+                            maxLength={MAX_LENGTHS.pekerjaan}
+                            className="w-full bg-[#0A0A0B] border border-[#2A2A2E] rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064] transition-colors"
+                            placeholder="Pekerjaan"
+                        />
                     </div>
-
+                    <div className="col-span-2 ">
+                        <label className="block text-[11px] uppercase font-bold text-[#6B6B70] mb-1.5">Alamat</label>
+                        <input
+                            value={form.alamat}
+                            onChange={e => {
+                                setForm({ ...form, alamat: e.target.value })
+                                if (formErrors.alamat) setFormErrors(prev => ({ ...prev, alamat: '' }))
+                            }}
+                            maxLength={MAX_LENGTHS.alamat}
+                            className={`w-full bg-[#0A0A0B] border rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-[#298064] transition-colors ${formErrors.alamat ? 'border-red-500' : 'border-[#2A2A2E]'}`}
+                            placeholder="Alamat lengkap"
+                        />
+                        {formErrors.alamat && <p className="text-red-500 text-xs mt-1">{formErrors.alamat}</p>}
+                    </div>
                     <div className="col-span-2 flex justify-end gap-3 mt-4">
                         <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-[#8B8B90] hover:text-white">Batal</button>
                         <button type="submit" className="px-6 py-2 bg-[#298064] hover:bg-[#216650] text-white text-sm font-semibold rounded-lg transition-all">Simpan Data</button>
                     </div>
                 </form>
-            </div>
-        </div>
+            </div >
+        </div >
     )
 }

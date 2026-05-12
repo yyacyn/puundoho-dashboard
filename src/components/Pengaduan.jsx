@@ -152,10 +152,10 @@ export default function PengaduanList() {
             )}
 
             {/* Main Table Container */}
-            <div className="rounded-xl overflow-hidden border border-[#1F1F23]">
+            <div className="rounded-xl overflow-x-auto border border-[#1F1F23]">
                 <table className="w-full border-collapse">
                     <thead>
-                        <tr className="bg-[#141417] border-b border-[#1F1F23]">
+                        <tr className="bg-[#141417] border-b border-[#1F1F23] whitespace-normal">
                             <th className="text-left px-5 py-3.5 text-[#6B6B70] text-[11px] font-semibold tracking-wide uppercase">Pelapor</th>
                             <th className="text-left px-5 py-3.5 text-[#6B6B70] text-[11px] font-semibold tracking-wide uppercase">Kategori</th>
                             <th className="text-left px-5 py-3.5 text-[#6B6B70] text-[11px] font-semibold tracking-wide uppercase w-[35%]">Judul Laporan</th>
