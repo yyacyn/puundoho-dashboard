@@ -127,12 +127,12 @@ export default function PendudukEditor() {
 
     // --- TABLE COLUMNS DEFINITION ---
     const columns = useMemo(() => [
-        { accessorKey: 'nik', header: 'NIK', cell: EditableCell },
-        { accessorKey: 'no_kk', header: 'No KK', cell: EditableCell },
-        { accessorKey: 'nama', header: 'Nama Lengkap', cell: EditableCell },
-        { accessorKey: 'jenis_kelamin', header: 'JK', cell: EditableCell },
-        { accessorKey: 'status_kawin', header: 'Status', cell: EditableCell },
-        { accessorKey: 'tempat_lahir', header: 'Tempat Lahir', cell: EditableCell },
+        { accessorKey: 'nik', header: 'NIK', cell: EditableCell, size: 140 },
+        { accessorKey: 'no_kk', header: 'No KK', cell: EditableCell, size: 140 },
+        { accessorKey: 'nama', header: 'Nama Lengkap', cell: EditableCell, size: 200 },
+        { accessorKey: 'jenis_kelamin', header: 'JK', cell: EditableCell, size: 50 },
+        { accessorKey: 'status_kawin', header: 'Status', cell: EditableCell, size: 100 },
+        { accessorKey: 'tempat_lahir', header: 'Tempat Lahir', cell: EditableCell, size: 130 },
         {
             accessorKey: 'tanggal_lahir',
             header: 'Tgl Lahir',
@@ -141,11 +141,12 @@ export default function PendudukEditor() {
                 // Format ISO string to YYYY-MM-DD
                 const displayVal = val && String(val).includes('T') ? val.split('T')[0] : val
                 return <EditableCell getValue={() => displayVal} row={row} column={column} table={table} />
-            }
+            },
+            size: 100
         },
-        { accessorKey: 'agama', header: 'Agama', cell: EditableCell },
-        { accessorKey: 'pekerjaan', header: 'Pekerjaan', cell: EditableCell },
-        { accessorKey: 'alamat', header: 'Alamat', cell: EditableCell },
+        { accessorKey: 'agama', header: 'Agama', cell: EditableCell, size: 100 },
+        { accessorKey: 'pekerjaan', header: 'Pekerjaan', cell: EditableCell, size: 130 },
+        { accessorKey: 'alamat', header: 'Alamat', cell: EditableCell, size: 250 },
         {
             id: 'actions',
             header: '',
@@ -157,6 +158,7 @@ export default function PendudukEditor() {
                     <RiDeleteBinLine size={14} />
                 </button>
             ),
+            size: 50
         }
     ], [])
 
@@ -431,12 +433,16 @@ export default function PendudukEditor() {
 
             {/* Table Area */}
             <div className="flex-1 overflow-auto bg-[#0A0A0B]">
-                <table className="w-full text-left border-collapse min-w-[1200px]">
+                <table className="w-full text-left border-collapse min-w-[1200px] table-fixed">
                     <thead className="sticky top-0 z-10 bg-[#141417]">
                         {table.getHeaderGroups().map(headerGroup => (
                             <tr key={headerGroup.id} className="border-b border-[#2A2A2E] resident-table-header-row">
                                 {headerGroup.headers.map(header => (
-                                    <th key={header.id} className="px-3 py-4 text-[10px] font-bold text-[#6B6B70] uppercase tracking-wider bg-[#111113]">
+                                    <th
+                                        key={header.id}
+                                        className="px-3 py-4 text-[10px] font-bold text-[#6B6B70] uppercase tracking-wider bg-[#111113]"
+                                        style={{ width: header.column.columnDef.size }}
+                                    >
                                         {flexRender(header.column.columnDef.header, header.getContext())}
                                     </th>
                                 ))}
@@ -463,7 +469,7 @@ export default function PendudukEditor() {
                             table.getRowModel().rows.map(row => (
                                 <tr key={row.id} className="border-b border-[#1F1F23] hover:bg-[#1A1A1D] transition-colors group resident-table-row">
                                     {row.getVisibleCells().map(cell => (
-                                        <td key={cell.id} className="px-3 py-1 text-[13px] text-[#ADADB0] focus-within:text-white bg-[#141417]">
+                                        <td key={cell.id} className="px-3 py-1 text-[13px] text-[#ADADB0] focus-within:text-white bg-[#141417] max-w-0">
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                         </td>
                                     ))}
