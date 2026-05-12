@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Overview from './Overview'
+import BendaharaOverview from './BendaharaOverview'
 import Articles from './Articles'
 import Listing from './Listing'
 import Gallery from './Gallery'
@@ -10,8 +11,8 @@ import Stunting from './Stunting'
 import DusunList from './DusunList'
 import IdmSdgs from './IdmSdgs'
 import Bansos from './Bansos'
-import Belanja from './Belanja'
 import ApbDes from './ApbDes'
+import Belanja from './Belanja'
 import Pengaduan from './Pengaduan'
 import Pengajuan from './Pengajuan'
 import { RiAlertLine } from 'react-icons/ri'
@@ -38,7 +39,7 @@ export default function DashboardLayout({ user, role, onLogout }) {
             {/* Page content */}
             <main className="flex-1 overflow-y-auto">
                 <Routes>
-                    <Route index element={<Overview />} />
+                    <Route index element={role === 'bendahara' ? <BendaharaOverview /> : <Overview />} />
                     <Route path="penduduk" element={<PendudukList />} />
                     <Route path="penduduk/:id" element={<PendudukEditor />} />
                     <Route path="stunting" element={<Stunting />} />

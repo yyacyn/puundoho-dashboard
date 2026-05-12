@@ -144,13 +144,6 @@ export default function PengaduanList() {
                 </div>
             )}
 
-            {/* Loading Message */}
-            {loading && (
-                <div className="bg-blue-500/10 border border-blue-500 text-blue-400 px-4 py-3 rounded-lg">
-                    Memuat data pengaduan...
-                </div>
-            )}
-
             {/* Main Table Container */}
             <div className="rounded-xl overflow-x-auto border border-[#1F1F23]">
                 <table className="w-full border-collapse">
@@ -165,7 +158,16 @@ export default function PengaduanList() {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredData.length === 0 ? (
+                        {loading ? (
+                            <tr>
+                                <td colSpan="6" className="text-center py-16 bg-[#141417]">
+                                    <div className="flex items-center justify-center gap-3">
+                                        <RiLoader4Line size={24} className="text-[#298064] animate-spin" />
+                                        <span className="text-[#6B6B70] text-sm">Memuat data pengaduan...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        ) : filteredData.length === 0 ? (
                             <tr>
                                 <td colSpan="6" className="text-center py-16 bg-[#141417]">
                                     <div className="flex flex-col items-center justify-center gap-3">

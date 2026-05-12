@@ -294,9 +294,9 @@ export default function StuntingList() {
                         {loading ? (
                             <tr>
                                 <td colSpan="9" className="text-center py-16 bg-[#141417]">
-                                    <div className="inline-flex items-center gap-2 text-[#8B8B90] text-sm">
-                                        <RiLoader4Line className="animate-spin" size={18} />
-                                        Memuat data stunting...
+                                    <div className="flex items-center justify-center gap-3">
+                                        <RiLoader4Line size={24} className="text-[#298064] animate-spin" />
+                                        <span className="text-[#6B6B70] text-sm">Memuat data stunting...</span>
                                     </div>
                                 </td>
                             </tr>
@@ -317,7 +317,9 @@ export default function StuntingList() {
                                 >
                                     <td className="px-5 py-4 bg-[#141417] text-[#ADADB0] text-[13px]" style={{ fontFamily: 'DM Mono, monospace' }}>{d.nik_anak || '-'}</td>
                                     <td className="px-5 py-4 bg-[#141417]">
-                                        <span className="text-white text-[13px] font-medium leading-snug">{d.nama_anak}</span>
+                                        <div className="max-w-[200px] truncate" title={d.nama_anak}>
+                                            <span className="text-white text-[13px] font-medium leading-snug">{d.nama_anak}</span>
+                                        </div>
                                     </td>
                                     <td className="px-5 py-4 bg-[#141417] text-[#ADADB0] text-[13px]">{d.dusun || d.lokasi_dusun}</td>
                                     <td className="px-5 py-4 bg-[#141417] text-[#ADADB0] text-[13px]" style={{ fontFamily: 'DM Mono, monospace' }}>{d.umur_bulan || 0} bln</td>

@@ -363,15 +363,15 @@ export default function Bansos() {
                                     key={d.id}
                                     className={`hover:bg-[#1A1A1D] transition-colors ${i < filteredData.length - 1 ? 'border-b border-[#1F1F23]' : ''}`}
                                 >
-                                    <td className="px-5 py-4 bg-[#141417]">
+                                    <td className="px-5 py-4 bg-[#141417] max-w-[180px]">
                                         <div className="flex flex-col gap-1">
-                                            <span className="text-white text-[13px] font-medium leading-snug">{d.nama_penerima}</span>
+                                            <span className="text-white text-[13px] font-medium leading-snug truncate" title={d.nama_penerima}>{d.nama_penerima}</span>
                                             <span className="text-[#6B6B70] text-[11px]" style={{ fontFamily: 'DM Mono, monospace' }}>{d.nik_penerima}</span>
                                         </div>
                                     </td>
-                                    <td className="px-5 py-4 bg-[#141417]">
+                                    <td className="px-5 py-4 bg-[#141417] max-w-[220px]">
                                         <div className="flex flex-col gap-1">
-                                            <span className="text-[#ADADB0] text-[13px]">{d.nama_program}</span>
+                                            <span className="text-[#ADADB0] text-[13px] truncate" title={d.nama_program}>{d.nama_program}</span>
                                             <span className="text-[#6B6B70] text-[11px]">{d.lokasi_dusun}</span>
                                         </div>
                                     </td>

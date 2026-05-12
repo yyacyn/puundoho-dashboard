@@ -88,7 +88,6 @@ export default function Overview() {
 
     // STATE DECLARATIONS
     const [selectedDusun, setSelectedDusun] = useState('Semua')
-    const [selectedWaktu, setSelectedWaktu] = useState('Tahun Ini')
     const [refreshTrigger, setRefreshTrigger] = useState(0)
     const [mapLayer, setMapLayer] = useState('umum') // 'umum', 'agama', 'umur', 'gender'
     const [sidePanelMode, setSidePanelMode] = useState('agama') // 'agama', 'umur', 'gender'
@@ -177,16 +176,15 @@ export default function Overview() {
     const multiplier = useMemo(() => {
         let m = 1
         if (selectedDusun !== 'Semua') m *= 0.2 // Asumsi 1 dusun adalah 20%
-        if (selectedWaktu === 'Bulan Ini') m *= 0.1 // Asumsi bulan ini 10%
         return m
-    }, [selectedDusun, selectedWaktu])
+    }, [selectedDusun])
 
     // Base values from API
     const basePenduduk = statsData && statsData.gender 
         ? (statsData.gender["Laki-laki"] || 0) + (statsData.gender["Perempuan"] || 0) 
         : 0
 
-    const isNoDataLastYear = selectedWaktu === 'Tahun Ini'
+    const isNoDataLastYear = true // Simulasi: Tidak ada perbandingan tahun lalu untuk dataset individu saat ini
 
     const metricCards = [
         { 
@@ -363,12 +361,15 @@ export default function Overview() {
                     </div>
                     <div className="flex flex-col gap-1 items-end">
                         <select 
-                            value={selectedWaktu} 
-                            onChange={(e) => setSelectedWaktu(e.target.value)}
-                            className="flex items-center gap-2 px-3.5 py-2 rounded-md bg-[#1A1A1D] border border-[#2A2A2E] text-[#ADADB0] text-xs font-medium outline-none focus:border-[#298064] cursor-pointer"
+                            value={selectedDatasetId} 
+                            onChange={(e) => setSelectedDatasetId(e.target.value)}
+                            disabled={datasets.length === 0}
+                            className="flex items-center gap-2 px-3.5 py-2 rounded-md bg-[#1A1A1D] border border-[#2A2A2E] text-[#ADADB0] text-xs font-medium outline-none focus:border-[#298064] cursor-pointer disabled:opacity-50"
                         >
-                            <option value="Tahun Ini">Tahun Ini</option>
-                            <option value="Bulan Ini">Bulan Ini</option>
+                            {datasets.map(d => (
+                                <option key={d.id} value={d.id}>Tahun {d.tahun}</option>
+                            ))}
+                            {datasets.length === 0 && <option value="">Tidak ada dataset</option>}
                         </select>
                     </div>
                     <div className="flex flex-col gap-1 items-end justify-end h-full">
