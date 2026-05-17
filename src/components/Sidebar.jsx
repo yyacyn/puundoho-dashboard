@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
+import logoImage from '../assets/logo-puundoho.png'
 import {
     RiDashboard3Line,
     RiGroupLine,
@@ -17,7 +18,8 @@ import {
     RiMoonLine,
     RiSunLine,
     RiLogoutBoxRLine,
-    RiFilePaper2Line
+    RiFilePaper2Line,
+    RiOrganizationChart
 } from 'react-icons/ri'
 
 const navItems = [
@@ -32,6 +34,7 @@ const navItems = [
     { icon: RiMapPinLine, label: 'Listing', to: '/dashboard/listing', roles: ['admin'] },
     { icon: RiNewspaperLine, label: 'Berita', to: '/dashboard/berita', roles: ['admin'] },
     { icon: RiImageLine, label: 'Galeri', to: '/dashboard/galeri', roles: ['admin'] },
+    { icon: RiOrganizationChart, label: 'Struktur Organisasi', to: '/dashboard/struktur-organisasi', roles: ['admin'] },
     { icon: RiCustomerService2Line, label: 'Pengaduan', to: '/dashboard/pengaduan', roles: ['admin'] },
     { icon: RiFilePaper2Line, label: 'Pengajuan PPID', to: '/dashboard/pengajuan', roles: ['admin'] },
 ]
@@ -74,6 +77,7 @@ export default function Sidebar({ user, role = 'admin', onLogout }) {
             <div className="flex flex-col gap-6">
                 {/* Logo */}
                 <div className="flex items-center gap-2.5 pb-4 border-b border-[#2A2A2E]">
+                    <img src={logoImage} alt="Logo Puundoho" className="w-8 h-8 object-contain" />
                     <span
                         className="text-white font-semibold tracking-[4px]"
                         style={{ fontFamily: 'DM Mono, monospace', fontSize: 15 }}

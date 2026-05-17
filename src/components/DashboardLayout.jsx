@@ -15,6 +15,7 @@ import ApbDes from './ApbDes'
 import Belanja from './Belanja'
 import Pengaduan from './Pengaduan'
 import Pengajuan from './Pengajuan'
+import StrukturOrganisasi from './StrukturOrganisasi'
 import { RiAlertLine } from 'react-icons/ri'
 
 // Placeholder for pages not yet built
@@ -51,6 +52,7 @@ export default function DashboardLayout({ user, role, onLogout }) {
                     <Route path="listing" element={<Listing />} />
                     <Route path="berita" element={<Articles />} />
                     <Route path="galeri" element={<Gallery />} />
+                    <Route path="struktur-organisasi" element={<StrukturOrganisasi />} />
                     <Route path="pengaduan" element={<Pengaduan />} />
                     <Route path="pengajuan" element={<Pengajuan />} />
                     {/* Catch-all inside dashboard */}
