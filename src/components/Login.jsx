@@ -79,10 +79,11 @@ function Login({ onLogin }) {
                 </form>
 
                 {/* Footer hint */}
-                <p className="text-[#4A4A4E] text-xs text-center flex flex-col gap-1">
-                    <span>Default Admin: <span className="text-[#6B6B70]">admin / admin123</span></span>
-                    <span>Default Bendahara: <span className="text-[#6B6B70]">bendahara / bendahara123</span></span>
-                </p>
+                {/* <p className="text-[#4A4A4E] text-xs text-center flex flex-col gap-1">
+                    <span>Default Admin: <span className="text-[#6B6B70]">admin / admin_puundoho
+                    </span></span>
+                    <span>Default Bendahara: <span className="text-[#6B6B70]">bendahara / bendahara_puundoho</span></span>
+                </p> */}
             </div>
         </div>
     )
