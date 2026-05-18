@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
+import { useState } from 'react'
+import { NavLink } from 'react-router-dom'
 import {
     RiDashboard3Line,
     RiGroupLine,
@@ -12,8 +12,6 @@ import {
     RiNewspaperLine,
     RiImageLine,
     RiCustomerService2Line,
-    RiArrowDownSLine,
-    RiArrowRightSLine,
     RiMoonLine,
     RiSunLine,
     RiLogoutBoxRLine,
@@ -41,20 +39,14 @@ const activeClass = 'bg-[#1A1A1D] text-white'
 const inactiveClass = 'text-[#8B8B90] hover:bg-[#1A1A1D] hover:text-white'
 
 export default function Sidebar({ user, role = 'admin', onLogout }) {
-    const location = useLocation()
-    const [openMenus, setOpenMenus] = useState({})
     const [isLightMode, setIsLightMode] = useState(() => {
         if (typeof window !== 'undefined') {
             return localStorage.getItem('theme') === 'light' ||
                 (document.documentElement.getAttribute('data-theme') === 'light')
-            return localStorage.getItem('theme') === 'light' ||
-                (document.documentElement.getAttribute('data-theme') === 'light')
+
         }
         return false
     })
-
-    const toggle = (label) =>
-        setOpenMenus((prev) => ({ ...prev, [label]: !prev[label] }))
 
     const toggleTheme = () => {
         const newTheme = isLightMode ? 'dark' : 'light'
@@ -90,124 +82,24 @@ export default function Sidebar({ user, role = 'admin', onLogout }) {
                 <nav className="flex flex-col gap-0.5">
                     {navItems
                         .filter(item => item.roles.includes(role))
-                        .map(({ icon: Icon, label, to, children }) => {
-
-                            // Parent with children (Keuangan)
-                            if (children) {
-                                const isGroupActive = location.pathname.startsWith('/dashboard/keuangan')
-                                return (
-                                    <div key={label}>
-                                        <button
-                                            onClick={() => toggle(label)}
-                                            className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left ${isGroupActive ? activeClass : inactiveClass}`}
-                                        >
-                                            <Icon size={17} className={isGroupActive ? 'text-[#298064]' : 'text-[#6B6B70]'} />
-                                            <span className="flex-1">{label}</span>
-                                            {openMenus[label]
-                                                ? <RiArrowDownSLine size={16} className="text-[#6B6B70]" />
-                                                : <RiArrowRightSLine size={16} className="text-[#6B6B70]" />
-                                            }
-                                        </button>
-                                        {openMenus[label] && (
-                                            <div className="flex flex-col gap-0.5 mt-0.5 ml-4 pl-3 border-l border-[#2A2A2E]">
-                                                {children.map(({ icon: ChildIcon, label: childLabel, to: childTo }) => (
-                                                    <NavLink
-                                                        key={childLabel}
-                                                        to={childTo}
-                                                        className={({ isActive }) =>
-                                                            `flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left ${isActive ? activeClass : inactiveClass}`
-                                                        }
-                                                    >
-                                                        {({ isActive }) => (
-                                                            <>
-                                                                <ChildIcon size={15} className={isActive ? 'text-[#298064]' : 'text-[#6B6B70]'} />
-                                                                {childLabel}
-                                                            </>
-                                                        )}
-                                                    </NavLink>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                )
-                            }
-                            // Parent with children (Keuangan)
-                            if (children) {
-                                const isGroupActive = location.pathname.startsWith('/dashboard/keuangan')
-                                return (
-                                    <div key={label}>
-                                        <button
-                                            onClick={() => toggle(label)}
-                                            className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left ${isGroupActive ? activeClass : inactiveClass}`}
-                                        >
-                                            <Icon size={17} className={isGroupActive ? 'text-[#298064]' : 'text-[#6B6B70]'} />
-                                            <span className="flex-1">{label}</span>
-                                            {openMenus[label]
-                                                ? <RiArrowDownSLine size={16} className="text-[#6B6B70]" />
-                                                : <RiArrowRightSLine size={16} className="text-[#6B6B70]" />
-                                            }
-                                        </button>
-                                        {openMenus[label] && (
-                                            <div className="flex flex-col gap-0.5 mt-0.5 ml-4 pl-3 border-l border-[#2A2A2E]">
-                                                {children.map(({ icon: ChildIcon, label: childLabel, to: childTo }) => (
-                                                    <NavLink
-                                                        key={childLabel}
-                                                        to={childTo}
-                                                        className={({ isActive }) =>
-                                                            `flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left ${isActive ? activeClass : inactiveClass}`
-                                                        }
-                                                    >
-                                                        {({ isActive }) => (
-                                                            <>
-                                                                <ChildIcon size={15} className={isActive ? 'text-[#298064]' : 'text-[#6B6B70]'} />
-                                                                {childLabel}
-                                                            </>
-                                                        )}
-                                                    </NavLink>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                )
-                            }
-
-                            // Regular nav item
+                        .map((item) => {
                             return (
                                 <NavLink
-                                    key={label}
-                                    to={to}
-                                    end={to === '/dashboard'} // exact match for Overview only
+                                    key={item.label}
+                                    to={item.to}
+                                    end={item.to === '/dashboard'} // exact match for Overview only
                                     className={({ isActive }) =>
                                         `flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left ${isActive ? activeClass : inactiveClass}`
                                     }
                                 >
                                     {({ isActive }) => (
                                         <>
-                                            <Icon size={17} className={isActive ? 'text-[#298064]' : 'text-[#6B6B70]'} />
-                                            <span className="flex-1">{label}</span>
+                                            <item.icon size={17} className={isActive ? 'text-[#298064]' : 'text-[#6B6B70]'} />
+                                            <span className="flex-1">{item.label}</span>
                                         </>
                                     )}
                                 </NavLink>
                             )
-                        })}
-                            // Regular nav item
-                    return (
-                    <NavLink
-                        key={label}
-                        to={to}
-                        end={to === '/dashboard'} // exact match for Overview only
-                        className={({ isActive }) =>
-                            `flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left ${isActive ? activeClass : inactiveClass}`
-                        }
-                    >
-                        {({ isActive }) => (
-                            <>
-                                <Icon size={17} className={isActive ? 'text-[#298064]' : 'text-[#6B6B70]'} />
-                                <span className="flex-1">{label}</span>
-                            </>
-                        )}
-                    </NavLink>
-                    )
                         })}
                 </nav>
             </div>
