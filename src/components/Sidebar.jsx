@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { NavLink, useLocation } from 'react-router-dom'
+import logoImage from '../assets/logo-puundoho.png'
 import {
     RiDashboard3Line,
     RiGroupLine,
@@ -15,7 +16,8 @@ import {
     RiMoonLine,
     RiSunLine,
     RiLogoutBoxRLine,
-    RiFilePaper2Line
+    RiFilePaper2Line,
+    RiOrganizationChart
 } from 'react-icons/ri'
 
 const navItems = [
@@ -23,7 +25,6 @@ const navItems = [
     { icon: RiGroupLine, label: 'Penduduk', to: '/dashboard/penduduk', roles: ['admin'] },
     { icon: RiHeartPulseLine, label: 'Stunting', to: '/dashboard/stunting', roles: ['admin'] },
     { icon: RiHandCoinLine, label: 'Bansos', to: '/dashboard/keuangan/bansos', roles: ['bendahara'] },
-    { icon: RiHandCoinLine, label: 'Bansos', to: '/dashboard/bansos', roles: ['bendahara'] },
     { icon: RiMap2Line, label: 'Dusun Desa', to: '/dashboard/dusun', roles: ['admin'] },
     { icon: RiBarChartBoxLine, label: 'IDM & SDGs', to: '/dashboard/idm-sdgs', roles: ['admin'] },
     { icon: RiBarChartBoxLine, label: 'APBDes', to: '/dashboard/keuangan/apbdes', roles: ['bendahara'] },
@@ -31,6 +32,7 @@ const navItems = [
     { icon: RiMapPinLine, label: 'Listing', to: '/dashboard/listing', roles: ['admin'] },
     { icon: RiNewspaperLine, label: 'Berita', to: '/dashboard/berita', roles: ['admin'] },
     { icon: RiImageLine, label: 'Galeri', to: '/dashboard/galeri', roles: ['admin'] },
+    { icon: RiOrganizationChart, label: 'Struktur Organisasi', to: '/dashboard/struktur-organisasi', roles: ['admin'] },
     { icon: RiCustomerService2Line, label: 'Pengaduan', to: '/dashboard/pengaduan', roles: ['admin'] },
     { icon: RiFilePaper2Line, label: 'Pengajuan PPID', to: '/dashboard/pengajuan', roles: ['admin'] },
 ]
@@ -43,7 +45,6 @@ export default function Sidebar({ user, role = 'admin', onLogout }) {
         if (typeof window !== 'undefined') {
             return localStorage.getItem('theme') === 'light' ||
                 (document.documentElement.getAttribute('data-theme') === 'light')
-
         }
         return false
     })
@@ -69,6 +70,7 @@ export default function Sidebar({ user, role = 'admin', onLogout }) {
             <div className="flex flex-col gap-6">
                 {/* Logo */}
                 <div className="flex items-center gap-2.5 pb-4 border-b border-[#2A2A2E]">
+                    <img src={logoImage} alt="Logo Puundoho" className="w-8 h-8 object-contain" />
                     <span
                         className="text-white font-semibold tracking-[4px]"
                         style={{ fontFamily: 'DM Mono, monospace', fontSize: 15 }}
@@ -82,7 +84,49 @@ export default function Sidebar({ user, role = 'admin', onLogout }) {
                 <nav className="flex flex-col gap-0.5">
                     {navItems
                         .filter(item => item.roles.includes(role))
-                        .map((item) => {
+                        .map(({ icon: Icon, label, to, children }) => {
+
+                            // Parent with children (Keuangan)
+                            if (children) {
+                                const isGroupActive = location.pathname.startsWith('/dashboard/keuangan')
+                                return (
+                                    <div key={label}>
+                                        <button
+                                            onClick={() => toggle(label)}
+                                            className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left ${isGroupActive ? activeClass : inactiveClass}`}
+                                        >
+                                            <Icon size={17} className={isGroupActive ? 'text-[#298064]' : 'text-[#6B6B70]'} />
+                                            <span className="flex-1">{label}</span>
+                                            {openMenus[label]
+                                                ? <RiArrowDownSLine size={16} className="text-[#6B6B70]" />
+                                                : <RiArrowRightSLine size={16} className="text-[#6B6B70]" />
+                                            }
+                                        </button>
+                                        {openMenus[label] && (
+                                            <div className="flex flex-col gap-0.5 mt-0.5 ml-4 pl-3 border-l border-[#2A2A2E]">
+                                                {children.map(({ icon: ChildIcon, label: childLabel, to: childTo }) => (
+                                                    <NavLink
+                                                        key={childLabel}
+                                                        to={childTo}
+                                                        className={({ isActive }) =>
+                                                            `flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left ${isActive ? activeClass : inactiveClass}`
+                                                        }
+                                                    >
+                                                        {({ isActive }) => (
+                                                            <>
+                                                                <ChildIcon size={15} className={isActive ? 'text-[#298064]' : 'text-[#6B6B70]'} />
+                                                                {childLabel}
+                                                            </>
+                                                        )}
+                                                    </NavLink>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                )
+                            }
+
+                            // Regular nav item
                             return (
                                 <NavLink
                                     key={item.label}
@@ -94,13 +138,14 @@ export default function Sidebar({ user, role = 'admin', onLogout }) {
                                 >
                                     {({ isActive }) => (
                                         <>
-                                            <item.icon size={17} className={isActive ? 'text-[#298064]' : 'text-[#6B6B70]'} />
-                                            <span className="flex-1">{item.label}</span>
+                                            <Icon size={17} className={isActive ? 'text-[#298064]' : 'text-[#6B6B70]'} />
+                                            <span className="flex-1">{label}</span>
                                         </>
                                     )}
                                 </NavLink>
                             )
                         })}
+
                 </nav>
             </div>
 

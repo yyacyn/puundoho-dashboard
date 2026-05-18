@@ -222,14 +222,14 @@ export default function Articles() {
 
             {/* Article Table */}
             <div className="rounded-xl overflow-hidden border border-[#1F1F23]">
-                <table className="w-full border-collapse">
+                <table className="w-full border-collapse table-fixed">
                     <thead>
                         <tr className="bg-[#141417] border-b border-[#1F1F23]">
-                            <th className="text-left px-5 py-3.5 text-[#6B6B70] text-[11px] font-semibold tracking-wide uppercase w-[50%]">Artikel</th>
-                            <th className="text-left px-5 py-3.5 text-[#6B6B70] text-[11px] font-semibold tracking-wide uppercase">Kategori</th>
-                            <th className="text-left px-5 py-3.5 text-[#6B6B70] text-[11px] font-semibold tracking-wide uppercase">Penulis</th>
-                            <th className="text-left px-5 py-3.5 text-[#6B6B70] text-[11px] font-semibold tracking-wide uppercase">Tanggal</th>
-                            <th className="text-right px-5 py-3.5 text-[#6B6B70] text-[11px] font-semibold tracking-wide uppercase">Aksi</th>
+                            <th className="text-left px-5 py-3.5 text-[#6B6B70] text-[11px] font-semibold tracking-wide uppercase w-[40%]">Artikel</th>
+                            <th className="text-left px-5 py-3.5 text-[#6B6B70] text-[11px] font-semibold tracking-wide uppercase w-[15%]">Kategori</th>
+                            <th className="text-left px-5 py-3.5 text-[#6B6B70] text-[11px] font-semibold tracking-wide uppercase w-[15%]">Penulis</th>
+                            <th className="text-left px-5 py-3.5 text-[#6B6B70] text-[11px] font-semibold tracking-wide uppercase w-[15%]">Tanggal</th>
+                            <th className="text-right px-5 py-3.5 text-[#6B6B70] text-[11px] font-semibold tracking-wide uppercase w-[15%]">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -258,7 +258,7 @@ export default function Articles() {
                                     className={`hover:bg-[#1A1A1D] transition-colors ${i < filtered.length - 1 ? 'border-b border-[#1F1F23]' : ''
                                         }`}
                                 >
-                                    <td className="px-5 py-4 bg-[#141417]">
+                                    <td className="px-5 py-4 bg-[#141417] max-w-0">
                                         <div className="flex items-center gap-3">
                                             {/* Cover thumbnail */}
                                             {article.cover_image ? (
@@ -273,7 +273,7 @@ export default function Articles() {
                                                 </div>
                                             )}
                                             <div className="flex flex-col gap-1 min-w-0">
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex items-center gap-2 min-w-0">
                                                     <span className="text-white text-[13px] font-medium leading-snug truncate block">
                                                         {article.title}
                                                     </span>
@@ -290,13 +290,13 @@ export default function Articles() {
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-5 py-4 bg-[#141417]">
-                                        <span className="px-2.5 py-1 rounded-full bg-[#1A1A1D] border border-[#2A2A2E] text-[#ADADB0] text-[12px] font-medium">
+                                    <td className="px-5 py-4 bg-[#141417] max-w-0">
+                                        <span className="px-2.5 py-1 rounded-full bg-[#1A1A1D] border border-[#2A2A2E] text-[#ADADB0] text-[12px] font-medium truncate block">
                                             {article.category || 'Pilih kategori'}
                                         </span>
                                     </td>
-                                    <td className="px-5 py-4 bg-[#141417]">
-                                        <span className="text-[#ADADB0] text-[13px]">{article.author}</span>
+                                    <td className="px-5 py-4 bg-[#141417] max-w-0">
+                                        <span className="text-[#ADADB0] text-[13px] truncate block">{article.author}</span>
                                     </td>
                                     <td className="px-5 py-4 bg-[#141417]">
                                         <span className="text-[#6B6B70] text-xs whitespace-nowrap">{formatDate(article.created_at)}</span>
@@ -755,7 +755,7 @@ function ArticleFormModal({ article, onClose, onSave }) {
                                     onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
                                     className="w-full px-4 py-3 rounded-lg bg-[#1A1A1D] border border-[#2A2A2E] text-white text-sm outline-none focus:border-[#298064] transition-colors flex items-center justify-between cursor-pointer"
                                 >
-                                    <span className={category ? 'text-white' : 'text-[#4A4A4E]'}>
+                                    <span className={`truncate ${category ? 'text-white' : 'text-[#4A4A4E]'}`}>
                                         {category || 'Pilih kategori...'}
                                     </span>
                                     <svg
@@ -777,7 +777,7 @@ function ArticleFormModal({ article, onClose, onSave }) {
                                                         setCategory(cat)
                                                         setShowCategoryDropdown(false)
                                                     }}
-                                                    className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${category === cat ? 'bg-[#298064] text-white' : 'text-[#ADADB0] hover:bg-[#2A2A2E]'}`}
+                                                    className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors truncate ${category === cat ? 'bg-[#298064] text-white' : 'text-[#ADADB0] hover:bg-[#2A2A2E]'}`}
                                                 >
                                                     {cat}
                                                 </button>

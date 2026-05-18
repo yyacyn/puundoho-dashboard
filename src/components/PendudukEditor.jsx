@@ -90,6 +90,7 @@ export default function PendudukEditor() {
     const [isExporting, setIsExporting] = useState(false)
     const [isAddModalOpen, setIsAddModalOpen] = useState(false)
     const [mappingData, setMappingData] = useState(null) // { headers, rawData }
+    const [pendingWorkbook, setPendingWorkbook] = useState(null)
     const [toast, setToast] = useState(null)
 
     const showToast = (message, type = 'success') => {
@@ -127,12 +128,12 @@ export default function PendudukEditor() {
 
     // --- TABLE COLUMNS DEFINITION ---
     const columns = useMemo(() => [
-        { accessorKey: 'nik', header: 'NIK', cell: EditableCell },
-        { accessorKey: 'no_kk', header: 'No KK', cell: EditableCell },
-        { accessorKey: 'nama', header: 'Nama Lengkap', cell: EditableCell },
-        { accessorKey: 'jenis_kelamin', header: 'JK', cell: EditableCell },
-        { accessorKey: 'status_kawin', header: 'Status', cell: EditableCell },
-        { accessorKey: 'tempat_lahir', header: 'Tempat Lahir', cell: EditableCell },
+        { accessorKey: 'nik', header: 'NIK', cell: EditableCell, size: 140 },
+        { accessorKey: 'no_kk', header: 'No KK', cell: EditableCell, size: 140 },
+        { accessorKey: 'nama', header: 'Nama Lengkap', cell: EditableCell, size: 200 },
+        { accessorKey: 'jenis_kelamin', header: 'JK', cell: EditableCell, size: 50 },
+        { accessorKey: 'status_kawin', header: 'Status', cell: EditableCell, size: 100 },
+        { accessorKey: 'tempat_lahir', header: 'Tempat Lahir', cell: EditableCell, size: 130 },
         {
             accessorKey: 'tanggal_lahir',
             header: 'Tgl Lahir',
@@ -141,11 +142,12 @@ export default function PendudukEditor() {
                 // Format ISO string to YYYY-MM-DD
                 const displayVal = val && String(val).includes('T') ? val.split('T')[0] : val
                 return <EditableCell getValue={() => displayVal} row={row} column={column} table={table} />
-            }
+            },
+            size: 100
         },
-        { accessorKey: 'agama', header: 'Agama', cell: EditableCell },
-        { accessorKey: 'pekerjaan', header: 'Pekerjaan', cell: EditableCell },
-        { accessorKey: 'alamat', header: 'Alamat', cell: EditableCell },
+        { accessorKey: 'agama', header: 'Agama', cell: EditableCell, size: 100 },
+        { accessorKey: 'pekerjaan', header: 'Pekerjaan', cell: EditableCell, size: 130 },
+        { accessorKey: 'alamat', header: 'Alamat', cell: EditableCell, size: 250 },
         {
             id: 'actions',
             header: '',
@@ -157,6 +159,7 @@ export default function PendudukEditor() {
                     <RiDeleteBinLine size={14} />
                 </button>
             ),
+            size: 50
         }
     ], [])
 
@@ -208,6 +211,90 @@ export default function PendudukEditor() {
         }
     }
 
+    const parseExcelSheet = (wb, sheetName) => {
+        try {
+            const ws = wb.Sheets[sheetName]
+
+            // Convert to raw matrix to find header zone
+            const rawMatrix = XLSX.utils.sheet_to_json(ws, { header: 1 })
+
+            // STEP 1: Find the data start row (look for 1 in NO URUT)
+            // Also find the anchor row for 'NIK' to know where to start looking
+            let anchorRowIndex = -1
+            for (let i = 0; i < Math.min(rawMatrix.length, 30); i++) {
+                const row = rawMatrix[i]
+                if (Array.isArray(row) && row.some(cell => String(cell || '').toLowerCase().includes('nik'))) {
+                    anchorRowIndex = i
+                    break
+                }
+            }
+
+            if (anchorRowIndex === -1) anchorRowIndex = 0
+
+            // Find where the actual data starts (the row with numeric 1, 2, 3...)
+            let dataStartRow = -1
+            for (let i = anchorRowIndex; i < Math.min(rawMatrix.length, anchorRowIndex + 15); i++) {
+                const row = rawMatrix[i]
+                if (Array.isArray(row)) {
+                    // Look for a cell that is exactly 1 (numeric or string)
+                    const hasOne = row.some(cell => cell === 1 || cell === "1")
+                    if (hasOne) {
+                        dataStartRow = i
+                        break
+                    }
+                }
+            }
+
+            // If no '1' found, fallback to the row after anchor
+            if (dataStartRow === -1) dataStartRow = anchorRowIndex + 1
+
+            // STEP 2: Collect headers from everything ABOVE dataStartRow
+            const columnHeaders = {} // { colIndex: [labels...] }
+            for (let rowIdx = 0; rowIdx < dataStartRow; rowIdx++) {
+                const row = rawMatrix[rowIdx]
+                if (!Array.isArray(row)) continue
+                row.forEach((cell, colIdx) => {
+                    const val = String(cell || '').trim()
+                    if (val !== '' && !val.match(/^\(\d+\)$/)) { // Ignore (1), (2) sub-labels
+                        if (!columnHeaders[colIdx]) columnHeaders[colIdx] = []
+                        if (!columnHeaders[colIdx].includes(val)) {
+                            columnHeaders[colIdx].push(val)
+                        }
+                    }
+                })
+            }
+
+            // STEP 3: Create merged header strings and clean data
+            const finalHeadersMap = {} // colIndex -> mergedLabel
+            const allHeaderLabels = []
+
+            Object.entries(columnHeaders).forEach(([colIdx, labels]) => {
+                const merged = labels.join(' ').trim()
+                finalHeadersMap[colIdx] = merged
+                allHeaderLabels.push(merged)
+            })
+
+            // Get only data rows starting from dataStartRow
+            const dataRows = rawMatrix.slice(dataStartRow)
+
+            // Convert to objects
+            const dataObjects = dataRows.map(row => {
+                const obj = {}
+                Object.entries(finalHeadersMap).forEach(([colIdx, label]) => {
+                    obj[label] = row[parseInt(colIdx)] ?? ''
+                })
+                return obj
+            }).filter(o => Object.values(o).some(v => String(v).trim() !== '')) // Remove empty rows
+
+            setMappingData({
+                headers: [...new Set(allHeaderLabels)],
+                rawData: dataObjects
+            })
+        } catch (error) {
+            showToast('Error parsing sheet: ' + error.message, 'error')
+        }
+    }
+
     const handleFileUpload = (e) => {
         const file = e.target.files[0]
         if (!file) return
@@ -217,84 +304,13 @@ export default function PendudukEditor() {
             try {
                 const bstr = evt.target.result
                 const wb = XLSX.read(bstr, { type: 'binary' })
-                const wsname = wb.SheetNames[0]
-                const ws = wb.Sheets[wsname]
 
-                // Convert to raw matrix to find header zone
-                const rawMatrix = XLSX.utils.sheet_to_json(ws, { header: 1 })
-
-                // STEP 1: Find the data start row (look for 1 in NO URUT)
-                // Also find the anchor row for 'NIK' to know where to start looking
-                let anchorRowIndex = -1
-                for (let i = 0; i < Math.min(rawMatrix.length, 30); i++) {
-                    const row = rawMatrix[i]
-                    if (Array.isArray(row) && row.some(cell => String(cell || '').toLowerCase().includes('nik'))) {
-                        anchorRowIndex = i
-                        break
-                    }
+                if (wb.SheetNames && wb.SheetNames.length > 1) {
+                    setPendingWorkbook(wb)
+                } else {
+                    const wsname = wb.SheetNames[0]
+                    parseExcelSheet(wb, wsname)
                 }
-
-                if (anchorRowIndex === -1) anchorRowIndex = 0
-
-                // Find where the actual data starts (the row with numeric 1, 2, 3...)
-                let dataStartRow = -1
-                for (let i = anchorRowIndex; i < Math.min(rawMatrix.length, anchorRowIndex + 15); i++) {
-                    const row = rawMatrix[i]
-                    if (Array.isArray(row)) {
-                        // Look for a cell that is exactly 1 (numeric or string)
-                        const hasOne = row.some(cell => cell === 1 || cell === "1")
-                        if (hasOne) {
-                            dataStartRow = i
-                            break
-                        }
-                    }
-                }
-
-                // If no '1' found, fallback to the row after anchor
-                if (dataStartRow === -1) dataStartRow = anchorRowIndex + 1
-
-                // STEP 2: Collect headers from everything ABOVE dataStartRow
-                const columnHeaders = {} // { colIndex: [labels...] }
-                for (let rowIdx = 0; rowIdx < dataStartRow; rowIdx++) {
-                    const row = rawMatrix[rowIdx]
-                    if (!Array.isArray(row)) continue
-                    row.forEach((cell, colIdx) => {
-                        const val = String(cell || '').trim()
-                        if (val !== '' && !val.match(/^\(\d+\)$/)) { // Ignore (1), (2) sub-labels
-                            if (!columnHeaders[colIdx]) columnHeaders[colIdx] = []
-                            if (!columnHeaders[colIdx].includes(val)) {
-                                columnHeaders[colIdx].push(val)
-                            }
-                        }
-                    })
-                }
-
-                // STEP 3: Create merged header strings and clean data
-                const finalHeadersMap = {} // colIndex -> mergedLabel
-                const allHeaderLabels = []
-
-                Object.entries(columnHeaders).forEach(([colIdx, labels]) => {
-                    const merged = labels.join(' ').trim()
-                    finalHeadersMap[colIdx] = merged
-                    allHeaderLabels.push(merged)
-                })
-
-                // Get only data rows starting from dataStartRow
-                const dataRows = rawMatrix.slice(dataStartRow)
-
-                // Convert to objects
-                const dataObjects = dataRows.map(row => {
-                    const obj = {}
-                    Object.entries(finalHeadersMap).forEach(([colIdx, label]) => {
-                        obj[label] = row[parseInt(colIdx)] ?? ''
-                    })
-                    return obj
-                }).filter(o => Object.values(o).some(v => String(v).trim() !== '')) // Remove empty rows
-
-                setMappingData({
-                    headers: [...new Set(allHeaderLabels)],
-                    rawData: dataObjects
-                })
             } catch (error) {
                 showToast('Error parsing file: ' + error.message, 'error')
             } finally {
@@ -431,12 +447,16 @@ export default function PendudukEditor() {
 
             {/* Table Area */}
             <div className="flex-1 overflow-auto bg-[#0A0A0B]">
-                <table className="w-full text-left border-collapse min-w-[1200px]">
+                <table className="w-full text-left border-collapse min-w-[1200px] table-fixed">
                     <thead className="sticky top-0 z-10 bg-[#141417]">
                         {table.getHeaderGroups().map(headerGroup => (
                             <tr key={headerGroup.id} className="border-b border-[#2A2A2E] resident-table-header-row">
                                 {headerGroup.headers.map(header => (
-                                    <th key={header.id} className="px-3 py-4 text-[10px] font-bold text-[#6B6B70] uppercase tracking-wider bg-[#111113]">
+                                    <th
+                                        key={header.id}
+                                        className="px-3 py-4 text-[10px] font-bold text-[#6B6B70] uppercase tracking-wider bg-[#111113]"
+                                        style={{ width: header.column.columnDef.size }}
+                                    >
                                         {flexRender(header.column.columnDef.header, header.getContext())}
                                     </th>
                                 ))}
@@ -463,7 +483,7 @@ export default function PendudukEditor() {
                             table.getRowModel().rows.map(row => (
                                 <tr key={row.id} className="border-b border-[#1F1F23] hover:bg-[#1A1A1D] transition-colors group resident-table-row">
                                     {row.getVisibleCells().map(cell => (
-                                        <td key={cell.id} className="px-3 py-1 text-[13px] text-[#ADADB0] focus-within:text-white bg-[#141417]">
+                                        <td key={cell.id} className="px-3 py-1 text-[13px] text-[#ADADB0] focus-within:text-white bg-[#141417] max-w-0">
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                         </td>
                                     ))}
@@ -499,6 +519,43 @@ export default function PendudukEditor() {
                     </button>
                 </div>
             </div>
+
+            {/* Sheet Selection Modal */}
+            {pendingWorkbook && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-[#141417] border border-[#2A2A2E] rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                        <h3 className="text-white font-semibold text-base mb-1.5">Pilih Sheet Excel</h3>
+                        <p className="text-[#6B6B70] text-[11px] mb-4">
+                            File Excel ini memiliki beberapa sheet/tab. Silakan pilih sheet yang ingin diimpor:
+                        </p>
+                        <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                            {pendingWorkbook.SheetNames.map((name, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => {
+                                        parseExcelSheet(pendingWorkbook, name)
+                                        setPendingWorkbook(null)
+                                    }}
+                                    className="w-full flex items-center justify-between p-3 bg-[#0A0A0B] hover:bg-[#1A1A1D] border border-[#2A2A2E] hover:border-[#298064] text-white text-xs rounded-xl text-left cursor-pointer transition-all group"
+                                >
+                                    <span className="font-semibold truncate max-w-[240px] group-hover:text-[#298064] transition-colors">{name}</span>
+                                    <span className="text-[#6B6B70] text-[10px] font-bold bg-[#141417] px-2 py-0.5 rounded border border-[#2A2A2E]">
+                                        Sheet #{idx + 1}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                        <div className="flex justify-end mt-5 pt-3 border-t border-[#2A2A2E]">
+                            <button
+                                onClick={() => setPendingWorkbook(null)}
+                                className="px-4 py-2 text-xs font-semibold text-[#8B8B90] hover:text-white transition-colors cursor-pointer"
+                            >
+                                Batal
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Mapping Modal */}
             {mappingData && (
