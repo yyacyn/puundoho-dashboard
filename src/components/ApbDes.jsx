@@ -5,7 +5,7 @@ import { apiFetch } from '../api'
 const MAX_LENGTHS = {
     kategori: 255,
     bidang: 255,
-    jumlah: 18,
+    jumlah: 11,
 }
 
 const formatRupiah = (num) => {

@@ -129,9 +129,9 @@ export default function Sidebar({ user, role = 'admin', onLogout }) {
                             // Regular nav item
                             return (
                                 <NavLink
-                                    key={item.label}
-                                    to={item.to}
-                                    end={item.to === '/dashboard'} // exact match for Overview only
+                                    key={label}
+                                    to={to}
+                                    end={to === '/dashboard'} // exact match for Overview only
                                     className={({ isActive }) =>
                                         `flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-left ${isActive ? activeClass : inactiveClass}`
                                     }

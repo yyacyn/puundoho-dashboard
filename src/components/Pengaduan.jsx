@@ -193,7 +193,7 @@ export default function PengaduanList() {
                                     </td>
                                     <td className="px-5 py-4 bg-[#141417] text-[#ADADB0] text-[13px]">{d.kategori}</td>
                                     <td className="px-5 py-4 bg-[#141417] text-[#ADADB0] text-[13px] max-w-xs" title={d.judul}>
-                                        <span className="truncate">{d.judul}</span>
+                                        <span className="leading-snug">{d.judul}</span>
                                     </td>
                                     <td className="px-5 py-4 bg-[#141417] text-[#8B8B90] text-[13px] whitespace-nowrap">{new Date(d.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
                                     <td className="px-5 py-4 bg-[#141417]">
@@ -230,125 +230,132 @@ export default function PengaduanList() {
             {/* Modal Detail Pengaduan */}
             {selectedPengaduan && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-                    <div className="bg-[#141417] border border-[#2A2A2E] rounded-xl w-full max-w-2xl overflow-y-auto shadow-2xl">
-                        <div className="p-6 border-b border-[#2A2A2E] flex justify-between items-center">
+                    <div className="bg-[#141417] border border-[#2A2A2E] rounded-xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl">
+                        {/* Header - Fixed */}
+                        <div className="p-6 border-b border-[#2A2A2E] flex justify-between items-center flex-shrink-0">
                             <h3 className="text-white font-semibold flex items-center gap-2">
                                 <RiCustomerService2Line className="text-[#298064]" />
                                 Detail Pengaduan
                             </h3>
-                            <button onClick={() => setSelectedPengaduan(null)} className="text-[#6B6B70] hover:text-white transition-colors">
+                            <button onClick={() => setSelectedPengaduan(null)} className="text-[#6B6B70] hover:text-white transition-colors text-2xl leading-none">
                                 &times;
                             </button>
                         </div>
-                        <div className="p-6 flex flex-col gap-6 text-[13px]">
-                            <div className="grid grid-cols-2 gap-6">
-                                <div>
-                                    <span className="block text-[11px] font-semibold text-[#6B6B70] uppercase mb-1">Pelapor</span>
-                                    <span className="text-white font-medium">{selectedPengaduan.nama}</span>
-                                </div>
-                                <div>
-                                    <span className="block text-[11px] font-semibold text-[#6B6B70] uppercase mb-1">Tanggal</span>
-                                    <span className="text-white font-medium">{new Date(selectedPengaduan.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                                </div>
-                                <div>
-                                    <span className="block text-[11px] font-semibold text-[#6B6B70] uppercase mb-1">Kategori</span>
-                                    <span className="inline-flex px-2 py-1 rounded bg-[#2A2A2E] text-[#E4E4E5] font-medium text-[11px]">{selectedPengaduan.kategori}</span>
-                                </div>
-                                <div>
-                                    <span className="block text-[11px] font-semibold text-[#6B6B70] uppercase mb-1">Status</span>
-                                    <span className={`inline-flex px-2 py-1 rounded text-[11px] font-medium 
+
+                        {/* Body - Scrollable */}
+                        <div className="flex-1 overflow-y-auto">
+                            <div className="p-6 flex flex-col gap-6 text-[13px]">
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div>
+                                        <span className="block text-[11px] font-semibold text-[#6B6B70] uppercase mb-1">Pelapor</span>
+                                        <span className="text-white font-medium">{selectedPengaduan.nama}</span>
+                                    </div>
+                                    <div>
+                                        <span className="block text-[11px] font-semibold text-[#6B6B70] uppercase mb-1">Tanggal</span>
+                                        <span className="text-white font-medium">{new Date(selectedPengaduan.tanggal).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                                    </div>
+                                    <div>
+                                        <span className="block text-[11px] font-semibold text-[#6B6B70] uppercase mb-1">Kategori</span>
+                                        <span className="inline-flex px-2 py-1 rounded bg-[#2A2A2E] text-[#E4E4E5] font-medium text-[11px]">{selectedPengaduan.kategori}</span>
+                                    </div>
+                                    <div>
+                                        <span className="block text-[11px] font-semibold text-[#6B6B70] uppercase mb-1">Status</span>
+                                        <span className={`inline-flex px-2 py-1 rounded text-[11px] font-medium 
                                             ${selectedPengaduan.status === 'Baru' ? 'bg-blue-500/10 text-blue-400' :
-                                            selectedPengaduan.status === 'Proses' ? 'bg-orange-500/10 text-orange-400' :
-                                                selectedPengaduan.status === 'Ditolak' ? 'bg-red-500/10 text-red-400' :
-                                                    'bg-green-500/10 text-green-400'}`}
-                                    >
-                                        {selectedPengaduan.status}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div>
-                                <span className="block text-[11px] font-semibold text-[#6B6B70] uppercase mb-2">Ubah Status</span>
-                                <div className="relative">
-                                    <button
-                                        onClick={() => setStatusDropdownOpen(!statusDropdownOpen)}
-                                        className="w-full px-3 py-2 rounded-lg bg-[#0A0A0B] border border-[#1F1F23] text-white text-[13px] font-medium flex items-center justify-between hover:border-[#2A2A2E] transition-colors"
-                                    >
-                                        {selectedPengaduan.status}
-                                        <RiArrowDownSLine size={16} />
-                                    </button>
-
-                                    {statusDropdownOpen && (
-                                        <div className="absolute z-10 top-full left-0 right-0 mt-1 rounded-lg bg-[#1A1A1D] border border-[#2A2A2E] shadow-lg">
-                                            {statusFlow[selectedPengaduan.status]?.map((nextStatus) => (
-                                                <button
-                                                    key={nextStatus}
-                                                    onClick={() => {
-                                                        setPendingStatus(nextStatus)
-                                                        setStatusDropdownOpen(false)
-                                                        if (nextStatus !== 'Ditolak') {
-                                                            setRejectReason('')
-                                                        }
-                                                    }}
-                                                    className="w-full px-3 py-2 text-left text-[13px] text-[#ADADB0] hover:bg-[#2A2A2E] hover:text-white transition-colors first:rounded-t-lg last:rounded-b-lg"
-                                                >
-                                                    {nextStatus}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {selectedPengaduan.status === 'Ditolak' && selectedPengaduan.keterangan && (
-                                <div>
-                                    <span className="block text-[11px] font-semibold text-[#6B6B70] uppercase mb-2">Alasan Penolakan</span>
-                                    <div className="p-4 rounded-lg bg-[#0A0A0B] border border-[#1F1F23] text-[#ADADB0] leading-relaxed">
-                                        {selectedPengaduan.keterangan}
+                                                selectedPengaduan.status === 'Proses' ? 'bg-orange-500/10 text-orange-400' :
+                                                    selectedPengaduan.status === 'Ditolak' ? 'bg-red-500/10 text-red-400' :
+                                                        'bg-green-500/10 text-green-400'}`}
+                                        >
+                                            {selectedPengaduan.status}
+                                        </span>
                                     </div>
                                 </div>
-                            )}
 
-                            {pendingStatus === 'Ditolak' && (
                                 <div>
-                                    <span className="block text-[11px] font-semibold text-[#6B6B70] uppercase mb-2">Alasan Penolakan (jika dipilih)</span>
-                                    <textarea
-                                        value={rejectReason}
-                                        onChange={(e) => setRejectReason(e.target.value)}
-                                        placeholder="Masukkan alasan penolakan..."
-                                        className="w-full px-3 py-2 rounded-lg bg-[#0A0A0B] border border-[#1F1F23] text-white text-[13px] placeholder-[#6B6B70] focus:outline-none focus:border-[#2A2A2E] resize-none"
-                                        rows="3"
-                                    />
-                                </div>
-                            )}
+                                    <span className="block text-[11px] font-semibold text-[#6B6B70] uppercase mb-2">Ubah Status</span>
+                                    <div className="relative">
+                                        <button
+                                            onClick={() => setStatusDropdownOpen(!statusDropdownOpen)}
+                                            className="w-full px-3 py-2 rounded-lg bg-[#0A0A0B] border border-[#1F1F23] text-white text-[13px] font-medium flex items-center justify-between hover:border-[#2A2A2E] transition-colors"
+                                        >
+                                            {pendingStatus || selectedPengaduan.status}
+                                            <RiArrowDownSLine size={16} />
+                                        </button>
 
-                            <div>
-                                <span className="block text-[11px] font-semibold text-[#6B6B70] uppercase mb-2">Isi Laporan</span>
-                                <div className="p-4 rounded-lg bg-[#0A0A0B] border border-[#1F1F23] text-[#ADADB0] leading-relaxed">
-                                    {selectedPengaduan.isi}
-                                </div>
-                            </div>
-
-                            {selectedPengaduan.foto_url && (
-                                <div>
-                                    <span className="block text-[11px] font-semibold text-[#6B6B70] uppercase mb-2">Lampiran Foto</span>
-                                    <div className="relative rounded-lg overflow-hidden border border-[#1F1F23] bg-[#0A0A0B] max-w-sm min-h-[150px] flex items-center justify-center">
-                                        {imgLoading && (
-                                            <div className="absolute inset-0 flex items-center justify-center">
-                                                <RiLoader4Line className="animate-spin text-[#6B6B70]" size={24} />
+                                        {statusDropdownOpen && (
+                                            <div className="absolute z-10 top-full left-0 right-0 mt-1 rounded-lg bg-[#1A1A1D] border border-[#2A2A2E] shadow-lg">
+                                                {statusFlow[selectedPengaduan.status]?.map((nextStatus) => (
+                                                    <button
+                                                        key={nextStatus}
+                                                        onClick={() => {
+                                                            setPendingStatus(nextStatus)
+                                                            setStatusDropdownOpen(false)
+                                                            if (nextStatus !== 'Ditolak') {
+                                                                setRejectReason('')
+                                                            }
+                                                        }}
+                                                        className="w-full px-3 py-2 text-left text-[13px] text-[#ADADB0] hover:bg-[#2A2A2E] hover:text-white transition-colors first:rounded-t-lg last:rounded-b-lg"
+                                                    >
+                                                        {nextStatus}
+                                                    </button>
+                                                ))}
                                             </div>
                                         )}
-                                        <img
-                                            src={selectedPengaduan.foto_url}
-                                            alt="Lampiran Pengaduan"
-                                            className={`w-full h-auto max-h-[250px] object-cover transition-opacity duration-300 ${imgLoading ? 'opacity-0' : 'opacity-100'}`}
-                                            onLoad={() => setImgLoading(false)}
-                                        />
                                     </div>
                                 </div>
-                            )}
+
+                                {selectedPengaduan.status === 'Ditolak' && selectedPengaduan.keterangan && (
+                                    <div>
+                                        <span className="block text-[11px] font-semibold text-[#6B6B70] uppercase mb-2">Alasan Penolakan</span>
+                                        <div className="p-4 rounded-lg bg-[#0A0A0B] border border-[#1F1F23] text-[#ADADB0] leading-relaxed">
+                                            {selectedPengaduan.keterangan}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {pendingStatus === 'Ditolak' && (
+                                    <div>
+                                        <span className="block text-[11px] font-semibold text-[#6B6B70] uppercase mb-2">Alasan Penolakan (jika dipilih)</span>
+                                        <textarea
+                                            value={rejectReason}
+                                            onChange={(e) => setRejectReason(e.target.value)}
+                                            placeholder="Masukkan alasan penolakan..."
+                                            className="w-full px-3 py-2 rounded-lg bg-[#0A0A0B] border border-[#1F1F23] text-white text-[13px] placeholder-[#6B6B70] focus:outline-none focus:border-[#2A2A2E] resize-none"
+                                            rows="3"
+                                        />
+                                    </div>
+                                )}
+
+                                <div>
+                                    <span className="block text-[11px] font-semibold text-[#6B6B70] uppercase mb-2">Isi Laporan</span>
+                                    <div className="p-4 rounded-lg bg-[#0A0A0B] border border-[#1F1F23] text-[#ADADB0] leading-relaxed">
+                                        {selectedPengaduan.isi}
+                                    </div>
+                                </div>
+
+                                {selectedPengaduan.foto_url && (
+                                    <div>
+                                        <span className="block text-[11px] font-semibold text-[#6B6B70] uppercase mb-2">Lampiran Foto</span>
+                                        <div className="relative rounded-lg overflow-hidden border border-[#1F1F23] bg-[#0A0A0B] max-w-sm min-h-[150px] flex items-center justify-center">
+                                            {imgLoading && (
+                                                <div className="absolute inset-0 flex items-center justify-center">
+                                                    <RiLoader4Line className="animate-spin text-[#6B6B70]" size={24} />
+                                                </div>
+                                            )}
+                                            <img
+                                                src={selectedPengaduan.foto_url}
+                                                alt="Lampiran Pengaduan"
+                                                className={`w-full h-auto max-h-[250px] object-cover transition-opacity duration-300 ${imgLoading ? 'opacity-0' : 'opacity-100'}`}
+                                                onLoad={() => setImgLoading(false)}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                        <div className="p-6 border-t border-[#1F1F23] bg-[#111113] flex justify-end gap-3">
+
+                        {/* Footer - Fixed, always visible */}
+                        <div className="p-6 border-t border-[#1F1F23] bg-[#111113] flex justify-end gap-3 flex-shrink-0">
                             <button
                                 onClick={() => setSelectedPengaduan(null)}
                                 className="px-4 py-2 text-sm font-medium text-white bg-[#1A1A1D] hover:bg-[#2A2A2E] border border-[#2A2A2E] rounded-lg transition-colors"

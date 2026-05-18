@@ -6,7 +6,7 @@ const IMAGEKIT_PUBLIC_KEY = 'public_oaXjLRSYC16BGPDCCi3lpc5Fd64='
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const ALLOWED_IMAGE_EXTS = ['.jpg', '.jpeg', '.png', '.webp']
-const MAX_LENGTHS = { nama: 255, deskripsi: 10000, kontak: 15, image_url: 500 }
+const MAX_LENGTHS = { nama: 255, deskripsi: 10000, kontak: 15, image_url: 500, harga: 9 }
 const MAX_DECIMAL_VALUE = 5
 const DECIMAL_PATTERN = /^\d{1,3}(\.\d{1,2})?$/
 
@@ -119,11 +119,11 @@ export default function ProdukDesa() {
         }
 
         if (!harga) {
-            nextErrors.harga = 'Harga wajib diisi (maksimal 18 digit).'
+            nextErrors.harga = 'Harga wajib diisi (maksimal 9 digit).'
         } else if (!/^\d+$/.test(harga)) {
             nextErrors.harga = 'Harga harus berupa angka tanpa tanda baca.'
-        } else if (harga.length > 18) {
-            nextErrors.harga = 'Harga maksimal 18 digit.'
+        } else if (harga.length > 9) {
+            nextErrors.harga = 'Harga maksimal 9 digit.'
         }
 
         const ratingError = validateRating(rating)
