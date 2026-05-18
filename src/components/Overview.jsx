@@ -76,13 +76,6 @@ function BaseVillageBoundary() {
         />
     )
 }
-
-// Dummy transactions because we don't have a transaction log table yet
-const defaultTransactions = [
-    { initials: 'AK', name: 'Admin Kependudukan', desc: 'Memperbarui data penduduk Dusun 1', badge: 'Selesai', badgeColor: 'bg-green-500/10 text-green-400', amount: '+2 Jiwa', amountColor: 'text-green-400' },
-    { initials: 'AW', name: 'Ahmad Wahyudi', desc: 'Pengaduan infrastruktur Dusun 2', badge: 'Baru', badgeColor: 'bg-blue-500/10 text-blue-400', amount: '1 Pengaduan', amountColor: 'text-[#ADADB0]' },
-]
-
 export default function Overview() {
     const navigate = useNavigate()
 
@@ -103,11 +96,12 @@ export default function Overview() {
     const [galleryItems, setGalleryItems] = useState([])
     const [mapDusuns, setMapDusuns] = useState([])
 
-    // Dummy values for unimplemented endpoints
-    const [kasusStunting] = useState(16)
-    const [pengaduanAktif] = useState(9)
+    // Real data lists for dynamic computations
+    const [stuntingList, setStuntingList] = useState([])
+    const [pengaduanList, setPengaduanList] = useState([])
+    const [pengajuanList, setPengajuanList] = useState([])
 
-    // FETCH INITIAL DATA (Datasets, Galeri, Articles)
+    // FETCH INITIAL DATA (Datasets, Galeri, Articles, Dusun, Stunting, Pengaduan, Pengajuan)
     useEffect(() => {
         const fetchInitial = async () => {
             try {
@@ -143,6 +137,27 @@ export default function Overview() {
                     setMapDusuns(dataDusun.dusun || [])
                 }
 
+                // 5. Fetch Stunting
+                const resStunting = await apiFetch('/stunting')
+                if (resStunting.ok) {
+                    const dataStunting = await resStunting.json()
+                    setStuntingList(dataStunting.stunting || [])
+                }
+
+                // 6. Fetch Pengaduan
+                const resPengaduan = await apiFetch('/pengaduan')
+                if (resPengaduan.ok) {
+                    const dataPengaduan = await resPengaduan.json()
+                    setPengaduanList(dataPengaduan.pengaduan || [])
+                }
+
+                // 7. Fetch Pengajuan
+                const resPengajuan = await apiFetch('/pengajuan')
+                if (resPengajuan.ok) {
+                    const dataPengajuan = await resPengajuan.json()
+                    setPengajuanList(dataPengajuan.pengajuan || [])
+                }
+
             } catch (error) {
                 console.error("Failed to fetch initial data", error)
             }
@@ -172,44 +187,63 @@ export default function Overview() {
 
     // DATA MAPPING & COMPUTATIONS
     
-    // 1. Metric Cards Filter Multiplier (Simulasi karena tidak ada endpoint khusus rentang waktu API saat ini)
-    const multiplier = useMemo(() => {
-        let m = 1
-        if (selectedDusun !== 'Semua') m *= 0.2 // Asumsi 1 dusun adalah 20%
-        return m
-    }, [selectedDusun])
-
     // Base values from API
     const basePenduduk = statsData && statsData.gender 
         ? (statsData.gender["Laki-laki"] || 0) + (statsData.gender["Perempuan"] || 0) 
         : 0
 
-    const isNoDataLastYear = true // Simulasi: Tidak ada perbandingan tahun lalu untuk dataset individu saat ini
+    // Real stunting count filtered by selectedDusun
+    const stuntingValue = useMemo(() => {
+        const onlyStunting = stuntingList.filter(s => s.status === 'Stunting')
+        if (selectedDusun === 'Semua') {
+            return onlyStunting.length
+        }
+        return onlyStunting.filter(s => (s.dusun || s.lokasi_dusun || '').toLowerCase() === selectedDusun.toLowerCase()).length
+    }, [selectedDusun, stuntingList])
+
+    // Real active complaints filtered by selectedDusun
+    const activeComplaintsCount = useMemo(() => {
+        const onlyActive = pengaduanList.filter(p => p.status === 'Baru' || p.status === 'Ditinjau' || p.status === 'Diproses')
+        if (selectedDusun === 'Semua') {
+            return onlyActive.length
+        }
+        return onlyActive.filter(p => (p.lokasi || '').toLowerCase().includes(selectedDusun.toLowerCase())).length
+    }, [selectedDusun, pengaduanList])
+
+    // Real population filtered by selectedDusun
+    const populationValue = useMemo(() => {
+        if (selectedDusun === 'Semua') {
+            return basePenduduk
+        }
+        if (!statsData || !statsData.dusun) return 0
+        const foundEntry = Object.entries(statsData.dusun).find(([name]) => name.toLowerCase() === selectedDusun.toLowerCase())
+        return foundEntry ? foundEntry[1] : 0
+    }, [selectedDusun, basePenduduk, statsData])
 
     const metricCards = [
         { 
             label: 'Total Penduduk', 
-            value: Math.floor(basePenduduk * multiplier).toLocaleString(), 
-            change: isNoDataLastYear ? 'Tidak ada data tahun lalu' : '+3.2% vs Sblm', 
-            up: isNoDataLastYear ? undefined : true, 
+            value: populationValue.toLocaleString(), 
+            change: 'Jumlah penduduk tercatat', 
+            up: undefined, 
         },
         { 
-            label: 'Kasus Stunting (Dummy)', 
-            value: Math.floor(kasusStunting * multiplier).toLocaleString(), 
-            change: isNoDataLastYear ? 'Tidak ada data tahun lalu' : '-5.1% vs Sblm', 
-            up: isNoDataLastYear ? undefined : false, 
+            label: 'Kasus Stunting', 
+            value: stuntingValue.toLocaleString(), 
+            change: 'Jumlah balita stunting terdata', 
+            up: undefined, 
         },
         { 
             label: 'Berita Tayang', 
-            value: Math.floor(totalArticles * multiplier).toLocaleString(), 
-            change: isNoDataLastYear ? 'Tidak ada data tahun lalu' : '+8.5% vs Sblm', 
-            up: isNoDataLastYear ? undefined : true, 
+            value: totalArticles.toLocaleString(), 
+            change: 'Artikel telah terbit', 
+            up: undefined, 
         },
         { 
-            label: 'Pengaduan Aktif (Dummy)', 
-            value: Math.floor(pengaduanAktif * multiplier).toLocaleString(), 
-            change: isNoDataLastYear ? 'Tidak ada data tahun lalu' : '-2.0% vs Sblm', 
-            up: isNoDataLastYear ? undefined : false, 
+            label: 'Pengaduan Aktif', 
+            value: activeComplaintsCount.toLocaleString(), 
+            change: 'Laporan warga belum selesai', 
+            up: undefined, 
         },
     ]
 
@@ -230,15 +264,17 @@ export default function Overview() {
         return Object.entries(statsData.dusun)
             .filter(([name]) => name.toLowerCase().includes('dusun'))
             .map(([name, count], index) => {
-                // Generate a dummy stunting count for now just to populate the graph
-                const dummyStunting = Math.floor(count * 0.02) 
+                const actualStunting = stuntingList.filter(s => 
+                    (s.dusun || s.lokasi_dusun || '').toLowerCase() === name.toLowerCase() && 
+                    s.status === 'Stunting'
+                ).length
                 
-                let status = 'Aktif'
+                let status = 'Kondisi Baik'
                 let statusColor = 'bg-green-500/10 text-green-400'
-                if (dummyStunting >= 5) {
-                    status = 'Waspada'
+                if (actualStunting >= 5) {
+                    status = 'Waspada Stunting'
                     statusColor = 'bg-red-500/10 text-red-400'
-                } else if (dummyStunting >= 2) {
+                } else if (actualStunting >= 1) {
                     status = 'Perlu Perhatian'
                     statusColor = 'bg-orange-500/10 text-orange-400'
                 }
@@ -247,14 +283,14 @@ export default function Overview() {
                     id: `DS${index + 1}`,
                     name: name,
                     penduduk: count,
-                    stunting: dummyStunting,
+                    stunting: actualStunting,
                     status: status,
                     statusColor: statusColor,
-                    time: 'Hari ini'
+                    time: 'Terdata'
                 }
             })
             .sort((a, b) => a.name.localeCompare(b.name))
-    }, [statsData])
+    }, [statsData, stuntingList])
 
     // 4. Combine Dusun boundaries with demographic stats for Map Tooltip
     const combinedMapDusuns = useMemo(() => {
@@ -266,7 +302,6 @@ export default function Overview() {
                 if (!sourceDict) return {}
                 const breakdown = {}
                 for (const [key, dusunMap] of Object.entries(sourceDict)) {
-                    // Match either direct name, uppercased, or exact map representation
                     const val = dusunMap[dusunNameKey] || dusunMap[dusunNameKey.toUpperCase()] || 0
                     if (val > 0) breakdown[key] = val
                 }
@@ -325,6 +360,89 @@ export default function Overview() {
         }
         return { array, color, title }
     }, [sidePanelMode, agamaArray, umurArray, genderArray])
+
+    // 8. Dynamic Activity Log from real complaints, stunting, and submissions
+    const recentActivities = useMemo(() => {
+        const list = []
+
+        // A. Complaints
+        pengaduanList.forEach(p => {
+            const initials = p.nama
+                ? p.nama.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+                : 'PD'
+            
+            let badgeColor = 'bg-blue-500/10 text-blue-400'
+            if (p.status === 'Ditinjau') badgeColor = 'bg-purple-500/10 text-purple-400'
+            if (p.status === 'Diproses') badgeColor = 'bg-orange-500/10 text-orange-400'
+            if (p.status === 'Selesai') badgeColor = 'bg-green-500/10 text-green-400'
+            if (p.status === 'Ditolak') badgeColor = 'bg-red-500/10 text-red-400'
+
+            list.push({
+                initials,
+                name: p.nama || 'Warga',
+                desc: `Mengajukan pengaduan: "${p.judul}"`,
+                badge: p.status || 'Baru',
+                badgeColor,
+                amount: p.kategori || 'Umum',
+                amountColor: 'text-[#ADADB0]',
+                timestamp: new Date(p.created_at || p.tanggal).getTime(),
+                dateStr: new Date(p.created_at || p.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+            })
+        })
+
+        // B. Submissions (Pengajuan PPID)
+        pengajuanList.forEach(p => {
+            const initials = p.nama
+                ? p.nama.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+                : 'PN'
+            
+            let badgeColor = 'bg-blue-500/10 text-blue-400'
+            if (p.status === 'Ditinjau') badgeColor = 'bg-purple-500/10 text-purple-400'
+            if (p.status === 'Disetujui') badgeColor = 'bg-green-500/10 text-green-400'
+            if (p.status === 'Ditolak') badgeColor = 'bg-red-500/10 text-red-400'
+
+            list.push({
+                initials,
+                name: p.nama || 'Warga',
+                desc: `Mengajukan PPID: "${p.judul}"`,
+                badge: p.status || 'Baru',
+                badgeColor,
+                amount: p.kategori || 'Dokumen',
+                amountColor: 'text-[#ADADB0]',
+                timestamp: new Date(p.created_at || p.tanggal).getTime(),
+                dateStr: new Date(p.created_at || p.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+            })
+        })
+
+        // C. Stunting Checkups
+        stuntingList.forEach(s => {
+            const initials = s.nama_anak
+                ? s.nama_anak.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
+                : 'ST'
+
+            let badgeColor = 'bg-green-500/10 text-green-400'
+            if (s.status === 'Stunting') badgeColor = 'bg-red-500/10 text-red-400'
+            if (s.status === 'Beresiko') badgeColor = 'bg-orange-500/10 text-orange-400'
+            if (s.status === 'Gizi Buruk') badgeColor = 'bg-red-500/10 text-red-400'
+
+            list.push({
+                initials,
+                name: `Balita: ${s.nama_anak}`,
+                desc: `Pemeriksaan stunting di ${s.dusun || s.lokasi_dusun}`,
+                badge: s.status || 'Normal',
+                badgeColor,
+                amount: `${s.umur_bulan || 0} bln`,
+                amountColor: 'text-orange-400',
+                timestamp: new Date(s.created_at || s.tanggal_pemeriksaan).getTime(),
+                dateStr: new Date(s.created_at || s.tanggal_pemeriksaan).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+            })
+        })
+
+        // Sort by timestamp descending
+        list.sort((a, b) => b.timestamp - a.timestamp)
+
+        return list.slice(0, 5) // Return top 5
+    }, [pengaduanList, pengajuanList, stuntingList])
 
     return (
         <div className="flex flex-col gap-7 px-10 py-8">
@@ -459,7 +577,7 @@ export default function Overview() {
                 {/* Visualisasi Kasus Stunting per Dusun */}
                 <div className="flex flex-col gap-5 p-6 rounded-xl bg-[#141417] border border-[#1F1F23]">
                     <div className="flex items-center justify-between">
-                        <span className="text-white text-sm font-semibold">Sebaran Kasus Stunting Berdasarkan Dusun (Dummy)</span>
+                        <span className="text-white text-sm font-semibold">Sebaran Kasus Stunting Berdasarkan Dusun</span>
                     </div>
                     <div className="h-[220px] w-full mt-2 relative">
                         {statsLoading ? (
@@ -496,7 +614,7 @@ export default function Overview() {
                 </div>
                 <div className="rounded-xl overflow-hidden border border-[#1F1F23] bg-[#111113]">
                     <div className="grid grid-cols-5 px-5 py-3.5 border-b border-[#1F1F23] bg-[#141417]">
-                        {['Wilayah', 'Total Penduduk', 'Kasus Stunting (Dummy)', 'Status (Dummy)', 'Terakhir Update'].map((h) => (
+                        {['Wilayah', 'Total Penduduk', 'Kasus Stunting', 'Status Wilayah', 'Terakhir Update'].map((h) => (
                             <span key={h} className="text-[#6B6B70] text-[11px] font-semibold tracking-wide uppercase">{h}</span>
                         ))}
                     </div>
@@ -513,7 +631,7 @@ export default function Overview() {
                                 <span className="text-white text-[13px] font-medium">{row.name}</span>
                             </div>
                             <span className="text-[#ADADB0] text-[13px]" style={{ fontFamily: 'DM Mono, monospace' }}>{row.penduduk} Jiwa</span>
-                            <span className={`text-xs font-medium ${parseInt(row.stunting) >= 5 ? 'text-red-400' : (parseInt(row.stunting) > 0 ? 'text-orange-400' : 'text-[#ADADB0]')}`} style={{ fontFamily: 'DM Mono, monospace' }}>
+                            <span className={`text-xs font-medium ${row.stunting >= 5 ? 'text-red-400' : (row.stunting > 0 ? 'text-orange-400' : 'text-[#ADADB0]')}`} style={{ fontFamily: 'DM Mono, monospace' }}>
                                 {row.stunting} kasus
                             </span>
                             <span className={`inline-flex w-fit px-2.5 py-1 rounded-full text-[11px] font-medium ${row.statusColor}`}>{row.status}</span>
@@ -541,63 +659,63 @@ export default function Overview() {
                     </div>
                     <div className="h-[450px] w-full rounded-xl overflow-hidden border border-[#1F1F23] bg-[#141417] relative z-0 map-dark-mode">
                         <MapContainer center={[-3.1, 121.08]} zoom={13} scrollWheelZoom={true} style={{ height: '100%', width: '100%' }}>
-                        <TileLayer
-                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        />
-                        <BaseVillageBoundary />
-                        <MapBounds dusuns={combinedMapDusuns} />
-                        {combinedMapDusuns.map(dusun => {
-                            if (!dusun.geojson_data) return null;
-                            try {
-                                const geom = JSON.parse(dusun.geojson_data);
-                                return (
-                                    <GeoJSON 
-                                        key={dusun.id + dusun.warna} // re-render on color change
-                                        data={geom} 
-                                        style={{ color: dusun.warna || '#3B82F6', fillColor: dusun.warna || '#3B82F6', fillOpacity: 0.5, weight: 2 }}
-                                    >
-                                        <MapTooltip sticky>
-                                            <div className="p-1 min-w-[130px] font-sans">
-                                                <div className="font-bold border-b border-gray-200 pb-1.5 mb-1.5 text-sm">{dusun.nama_dusun}</div>
-                                                
-                                                {mapLayer === 'umum' && (
-                                                    <>
-                                                        <div className="flex justify-between items-center text-xs mb-1">
-                                                            <span className="text-gray-600">Total Penduduk:</span>
-                                                            <span className="font-bold text-gray-800">{dusun.penduduk} Jiwa</span>
-                                                        </div>
-                                                        <div className="flex justify-between items-center text-xs">
-                                                            <span className="text-gray-600">Kasus Stunting:</span>
-                                                            <span className="font-bold text-orange-600">{dusun.stunting} Kasus</span>
-                                                        </div>
-                                                    </>
-                                                )}
-
-                                                {mapLayer !== 'umum' && (
-                                                    <div className="flex flex-col gap-1.5">
-                                                        <div className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider mb-0.5 border-b border-gray-200 pb-1">
-                                                            Berdasarkan {mapLayer}
-                                                        </div>
-                                                        {Object.entries(dusun[mapLayer] || {}).map(([k, v]) => (
-                                                            <div key={k} className="flex justify-between items-center text-xs">
-                                                                <span className="text-gray-600 mr-3">{k}:</span>
-                                                                <span className="font-bold text-blue-600">{v}</span>
+                            <TileLayer
+                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            />
+                            <BaseVillageBoundary />
+                            <MapBounds dusuns={combinedMapDusuns} />
+                            {combinedMapDusuns.map(dusun => {
+                                if (!dusun.geojson_data) return null;
+                                try {
+                                    const geom = JSON.parse(dusun.geojson_data);
+                                    return (
+                                        <GeoJSON 
+                                            key={dusun.id + dusun.warna} // re-render on color change
+                                            data={geom} 
+                                            style={{ color: dusun.warna || '#3B82F6', fillColor: dusun.warna || '#3B82F6', fillOpacity: 0.5, weight: 2 }}
+                                        >
+                                            <MapTooltip sticky>
+                                                <div className="p-1 min-w-[130px] font-sans">
+                                                    <div className="font-bold border-b border-gray-200 pb-1.5 mb-1.5 text-sm">{dusun.nama_dusun}</div>
+                                                    
+                                                    {mapLayer === 'umum' && (
+                                                        <>
+                                                            <div className="flex justify-between items-center text-xs mb-1">
+                                                                <span className="text-gray-600">Total Penduduk:</span>
+                                                                <span className="font-bold text-gray-800">{dusun.penduduk} Jiwa</span>
                                                             </div>
-                                                        ))}
-                                                        {Object.keys(dusun[mapLayer] || {}).length === 0 && (
-                                                            <span className="text-xs text-gray-400 italic">Data kosong</span>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </MapTooltip>
-                                    </GeoJSON>
-                                );
-                            } catch (e) { return null; }
-                        })}
-                    </MapContainer>
-                </div>
+                                                            <div className="flex justify-between items-center text-xs">
+                                                                <span className="text-gray-600">Kasus Stunting:</span>
+                                                                <span className="font-bold text-orange-600">{dusun.stunting} Kasus</span>
+                                                            </div>
+                                                        </>
+                                                    )}
+
+                                                    {mapLayer !== 'umum' && (
+                                                        <div className="flex flex-col gap-1.5">
+                                                            <div className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider mb-0.5 border-b border-gray-200 pb-1">
+                                                                Berdasarkan {mapLayer}
+                                                            </div>
+                                                            {Object.entries(dusun[mapLayer] || {}).map(([k, v]) => (
+                                                                <div key={k} className="flex justify-between items-center text-xs">
+                                                                    <span className="text-gray-600 mr-3">{k}:</span>
+                                                                    <span className="font-bold text-blue-600">{v}</span>
+                                                                </div>
+                                                            ))}
+                                                            {Object.keys(dusun[mapLayer] || {}).length === 0 && (
+                                                                <span className="text-xs text-gray-400 italic">Data kosong</span>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </MapTooltip>
+                                        </GeoJSON>
+                                    );
+                                } catch (e) { return null; }
+                            })}
+                        </MapContainer>
+                    </div>
                 </div>
 
                 {/* Side Demographics */}
@@ -682,11 +800,13 @@ export default function Overview() {
             {/* Recent Activity */}
             <div className="flex flex-col gap-4 pb-8">
                 <div className="flex items-center justify-between">
-                    <span className="text-white text-sm font-semibold">Log Aktivitas (Dummy)</span>
+                    <span className="text-white text-sm font-semibold">Log Aktivitas Terbaru</span>
                 </div>
                 <div className="flex flex-col gap-2">
-                    {defaultTransactions.map((item) => (
-                        <div key={item.name} className="flex items-center justify-between p-4 rounded-[10px] bg-[#141417] border border-[#1F1F23]">
+                    {recentActivities.length === 0 ? (
+                        <div className="py-8 bg-[#141417] rounded-xl border border-[#1F1F23] text-center text-sm text-[#6B6B70]">Belum ada aktivitas tercatat</div>
+                    ) : recentActivities.map((item, index) => (
+                        <div key={index} className="flex items-center justify-between p-4 rounded-[10px] bg-[#141417] border border-[#1F1F23]">
                             <div className="flex items-center gap-3.5">
                                 <div className="w-10 h-10 rounded-lg bg-[#1F1F23] flex items-center justify-center shrink-0">
                                     <span className="text-[#8B8B90] text-xs font-semibold">{item.initials}</span>
